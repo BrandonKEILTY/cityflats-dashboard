@@ -245,6 +245,27 @@ class SyncPage(unittest.TestCase):
         self.assertNotIn("Fake, Name", full)
 
 
+class BuildSite(unittest.TestCase):
+    PAGE = '<script>window.CLIENT_FEED = null; /* removed */\n</script><script>var F = window.CLIENT_FEED;</script>'
+
+    def test_page_and_feed_json_carry_the_same_figures(self):
+        from tools import build_site, render_check
+        feed = {"asAt": "2026-10-02", "dataThrough": "2026-10-01", "generated": "2026-10-02 06:00", "properties": [{"id": "x", "name": "Suite é"}]}
+        d = tempfile.mkdtemp()
+        page = os.path.join(d, "page.html")
+        open(page, "w", encoding="utf-8").write(self.PAGE)
+        for given in (feed, build_site.wrapper(feed)):  # plain feed or the R2 wrapper
+            out = os.path.join(d, "site")
+            build_site.build(given, out, page)
+            html = open(os.path.join(out, "index.html"), encoding="utf-8").read()
+            wrapped = json.load(open(os.path.join(out, "feed.json"), encoding="utf-8"))
+            self.assertEqual(render_check.builtin_feed(html), feed)
+            self.assertEqual(render_check.site_feed(wrapped), feed)
+            self.assertEqual(sorted(wrapped), ["asAt", "dataThrough", "generated", "json"])
+            self.assertIn("var F = window.CLIENT_FEED;", html)
+            self.assertIn("no-store", open(os.path.join(out, "_headers")).read())
+
+
 class RenderCheck(unittest.TestCase):
     def test_swap_replaces_the_built_in_feed_only(self):
         from tools import render_check

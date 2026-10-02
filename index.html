@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Cityflats Dashboard</title>
-<!-- keilty-template 2026-10-02.12 -->
+<!-- keilty-template 2026-10-02.14 -->
 <style>
   /* Layout: a quiet white header carrying the City Flats wordmark, a sticky
      bar to move between the portfolio overview and one property at a time,
@@ -709,7 +709,7 @@ window.CLIENT_FEED = null; /* the live page carries a built-in copy of the figur
   function leasingBlock(p){
     var St=p.funnel.stages, top=Math.max.apply(null,St.map(function(s){return s[1];}))||1;
     var t=(p.toursBooked||[]).filter(function(l){ return l.tour.slice(0,10)>=TODAY; }).sort(function(a,b){ return a.tour.localeCompare(b.tour); });
-    return sh("sec-leasing","Leasing")+'<div class="g2"><div class="card"><div class="ch"><span class="t">Where every lead stands</span><span class="c">'+(p.funnel.since?'activity since '+esc(p.funnel.since):'activity over the period')+'</span>'+use("Leasing","E",p.funnel.source)+'</div><div class="lede" style="margin:0;padding:10px 16px 0;font-size:13px">Leads, applications and leases that moved through each stage over the period, not today’s totals. Today’s position is in Where we are this week.</div><div class="fun">'+
+    return sh("sec-leasing","Leasing")+'<div class="g2"><div class="card"><div class="ch"><span class="t">Where every lead stands</span><span class="c">'+(p.funnel.since&&p.funnel.until?'activity '+esc(p.funnel.since)+' to '+esc(p.funnel.until):p.funnel.since?'activity since '+esc(p.funnel.since):'activity over the period')+'</span>'+use("Leasing","E",p.funnel.source)+'</div><div class="lede" style="margin:0;padding:10px 16px 0;font-size:13px">Leads, applications and leases that moved through each stage over the period, not today’s totals. Today’s position is in Where we are this week.</div><div class="fun">'+
       /* the four stages every KEILTY dashboard shows, then Entrata's own stages behind a toggle */
       (function(){ var n=function(i){ return (St[i]||[])[1]||0; }, four=[["Leads",n(0)],["Applications",n(1)+n(2)+n(3)+n(4)],["Leases in progress",n(5)+n(6)+n(7)],["Leases signed",n(8)]], t4=Math.max.apply(null,four.map(function(x){return x[1];}).concat([1]));
         return four.map(function(s){ return '<div class="fs"><div class="n">'+esc(s[0])+'</div><div class="c">'+s[1]+'</div><div class="w"></div><div class="b"><i style="width:'+Math.round(s[1]/t4*100)+'%"></i></div></div>'; }).join(""); })()+
@@ -948,7 +948,12 @@ window.CLIENT_FEED = null; /* the live page carries a built-in copy of the figur
       if(F && nf.generated===F.generated && nf.asAt===F.asAt && nf.dataThrough===F.dataThrough) return;
       F=nf; TODAY=F.asAt; paint(); }catch(e){}
   }
-  (function connect(tries){
+  /* WHERE THE FIGURES COME FROM. On the client's own site (Cloudflare Pages), the routine deploys
+     feed.json next to this page: that is read first. Where there is no feed.json (the Claude artifact,
+     kept as a backup during the move), the page reads the artifact's database document dash/feed instead.
+     Either way the built-in figures show until a feed loads. Nothing here ever writes. */
+  function applyAny(o){ if(!o) return; if(typeof o.json==="string") applyFeed(o); else if(o.properties) applyFeed({json:JSON.stringify(o)}); }
+  function connectDb(){ (function connect(tries){
     if(!(window.claude&&typeof window.claude.use==="function")){ if(tries<40) setTimeout(function(){ connect(tries+1); },250); return; }
     window.claude.use("db").then(function(db){
       if(!db) return;
@@ -956,7 +961,15 @@ window.CLIENT_FEED = null; /* the live page carries a built-in copy of the figur
       if(typeof ref.onSnapshot==="function") ref.onSnapshot(applyFeed,function(){});
       else if(typeof ref.get==="function") ref.get().then(applyFeed,function(){});
     },function(){});
-  })(0);
+  })(0); }
+  (function siteFeed(){
+    var done=false;
+    try{
+      fetch("feed.json",{cache:"no-store",credentials:"same-origin"}).then(function(r){
+        if(!r.ok) throw 0; return r.json();
+      }).then(function(o){ if(o&&(o.properties||typeof o.json==="string")){ done=true; applyAny(o); } else connectDb(); }).catch(function(){ if(!done) connectDb(); });
+    }catch(e){ connectDb(); }
+  })();
 })();
 </script>
 
