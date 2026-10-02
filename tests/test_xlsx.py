@@ -143,6 +143,40 @@ class RenewalsAndIncreases(unittest.TestCase):
         self.assertEqual({r["num"] for r in late}, {"101", "102", "202"})
         self.assertEqual(derive.increases(rr, "2027-08-01"), sorted(late, key=lambda r: (r["noticeBy"], r["num"])))
 
+    def test_renewed_suites_are_left_off(self):
+        import copy
+        rr = load("f47", STABLE)["Rent Roll"]
+        ar = load("f47", STABLE)["Resident Aged Receivables"]
+        self.assertEqual(derive.renewed_units(rr, ar), [])
+        ar2 = copy.deepcopy(ar)
+        ar2["rows"][1]["status"] = "Current - Renewed"  # suite 102
+        self.assertEqual(derive.renewed_units(rr, ar2), ["102"])
+        self.assertEqual([r["num"] for r in derive.increases(rr, "2026-12-15", derive.renewed_units(rr, ar2))], ["101"])
+        rr2 = copy.deepcopy(rr)  # a renewal lease on an occupied suite: a future lease for the same suite
+        rr2["future"].append(dict(rr["future"][0], unit="101", resident="Fakename, Newterm", lease_start="2027-09-01"))
+        self.assertEqual(derive.renewed_units(rr2, None), ["101"])
+        self.assertEqual([r["num"] for r in derive.increases(rr2, "2026-12-15", derive.renewed_units(rr2, None))], ["102"])
+
+    def test_future_lease_on_an_empty_suite_is_not_a_renewal(self):
+        rr = load("grove", LEASEUP)["Rent Roll"]  # suite 101 has two future residents and no current one
+        self.assertEqual(derive.renewed_units(rr, None), [])
+
+    def test_availability_notes_are_never_a_lease_date_source(self):
+        import inspect
+        self.assertNotIn("availab", inspect.getsource(derive.increases).split('"""')[2].lower())  # code uses lease start only
+
+    def test_lease_start_to_confirm_is_reported_while_listed(self):
+        old = dict(derive.LEASE_START_TO_CONFIRM)
+        derive.LEASE_START_TO_CONFIRM["f47"] = ["101", "999"]
+        try:
+            f = figures.build(DATA, "f47", "2026-12-14", property_name=STABLE, as_at="2026-12-15")
+        finally:
+            derive.LEASE_START_TO_CONFIRM.clear()
+            derive.LEASE_START_TO_CONFIRM.update(old)
+        self.assertEqual(f["leaseStartToConfirm"], ["101"])  # 999 is not on the list, so it is not reported
+        self.assertIn("lease start", f["increasesBasis"])
+        self.assertEqual(f["renewedSuites"], [])
+
     def test_lease_up_future_leases_are_not_due(self):
         rr = load("grove", LEASEUP)["Rent Roll"]
         self.assertEqual(derive.increases(rr, "2026-10-01"), [])

@@ -78,7 +78,7 @@ def name_hits(prop, rent_roll_names):
     return hits
 
 
-def check(new, old, names=None):
+def check(new, old, names=None, renewed=None):
     fails = []
     text = json.dumps(new)
     for bad in ("NaN", "undefined", "Infinity"):
@@ -146,6 +146,10 @@ def check(new, old, names=None):
             keys = [(r["noticeBy"], r["num"]) for r in inc if isinstance(r, dict) and "noticeBy" in r]
             if keys != sorted(keys):
                 fails.append(f"9. {pid}: increases are not sorted by notice date")
+        # a suite with a renewal is left off the rent increases list (the renewal sets the new rent)
+        for u in (renewed or {}).get(pid, []):
+            if any(isinstance(r, dict) and r.get("num") == u for r in (inc if isinstance(inc, list) else [])):
+                fails.append(f"13. {pid}: suite {u} has a renewal, so it must not be on the rent increases list")
         # renewals: lease ends [date, count] for the next 12 months only
         by = (p.get("renewals") or {}).get("byEnd")
         if by is not None:
@@ -184,13 +188,14 @@ if __name__ == "__main__":
     ap.add_argument("old")
     ap.add_argument("--figures", action="append", default=[], help="a parsers.figures output (grove.json / f47.json); gives the Rent Roll names. Repeat for each property.")
     a = ap.parse_args()
-    names = {}
+    names, renewed = {}, {}
     for path in a.figures:
         fg = json.load(open(path))
         names[fg["id"]] = fg.get("residents", [])
+        renewed[fg["id"]] = fg.get("renewedSuites", [])
     if not names:
         print("note: no --figures given, so only names already in the arrears table and prospects are checked, not the Rent Roll")
-    f = check(json.load(open(a.new)), json.load(open(a.old)), names)
+    f = check(json.load(open(a.new)), json.load(open(a.old)), names, renewed)
     for x in f:
         print("FAIL", x)
     print("feed checks:", "FAILED" if f else "passed")

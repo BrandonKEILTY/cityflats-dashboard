@@ -110,7 +110,7 @@ Examples:
   - deals
   - rent.*
   - renewals.byEnd: [date, count] pairs for lease ends in the next 12 months only (current and future residents)
-  - increases: one row per lease, {num, rent, earliest, noticeBy}; no new rent (the dashboard shows when an increase is due, not the amount). earliest = lease start + 12 months; noticeBy = earliest minus 90 days; only rows whose noticeBy is by the run date + 6 months, notices already due included
+  - increases: one row per lease, {num, rent, earliest, noticeBy}; no new rent (the dashboard shows when an increase is due, not the amount). earliest = lease start + 12 months; noticeBy = earliest minus 90 days; only rows whose noticeBy is by the run date + 6 months, notices already due included. Suites with a renewal are left off: "Renewed" on the receivables report means a renewal lease is signed for the next term and sets the new rent, and so does a future lease on a suite that has a current resident. The rent last changed on the Rent Roll lease start; Availability dates and notes are never a source for lease dates. A rent change during a lease (a later rent line in Scheduled Charges) would be measured from that change, and a renewed lease from the renewal's start; neither can be read from the Rent Roll columns we receive, so the lease start is used and the summary says so.
 - Status rules:
   - occupied = current resident
   - leased (Grove) or "Leased, moving in" (F47) = future resident with last month's rent received (Deposit Held > 0, or a negative Balance / Pre-Payment)
