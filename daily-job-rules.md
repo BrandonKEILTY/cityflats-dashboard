@@ -20,7 +20,11 @@ Update the Cityflats Dashboard for Brandon Ackerman (KEILTY Realty Management In
   - Amounts are as the export shows them; do not adjust for what a later report would say.
   - A report missing from the package (for example Faculty47 Concessions on a day it is left out) keeps its last figures and is flagged, never filled in.
   - The first time Expiring Leases has rows, say so in the summary, because that layout has not been checked against a real report.
-- **Open problem:** the Outlook connector returns attachments as text, not PDF files. See README-for-Claude-Code.md, "Open problem: getting the PDFs into the parsers".
+- **Input is Excel.** The connector returns an `.xlsx` attachment as clean tab-separated text; PDFs come back flattened and are not parsed. The step-by-step run is in `ROUTINE.md`.
+  - A report with no Excel in any of today's packages is missing: keep its last figures and flag it.
+  - A sheet the parser cannot read: keep that report's last figures, raise a `fix` flag, describe it in the summary, and carry on with the rest. Only a failed whole-feed check stops the run.
+  - Expiring Leases that says "returned no data" means zero expiring leases.
+  - `inventory.plans`, `inventory.askingAvg` and `weeklyChecklist` are carried forward unchanged.
 
 ## THE DASHBOARD
 

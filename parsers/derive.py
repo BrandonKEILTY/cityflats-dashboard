@@ -57,22 +57,38 @@ def deals(rr, mode):
     return out
 
 
-def rent(rr, av):
-    fut = [f for f in rr["future"] if f["scheduled"] is not None]
-    leased = [f for f in fut if _leased(f)]
+def _half_up(v):
+    return int(v + 0.5)
+
+
+def rent(rr, av, mode):
+    """Rent figures. leaseup (Grove): signed leases, budget on the same suites, loss to lease, committed, full budget.
+    stabilised (Faculty47): rent in place on occupied suites and rent of leased move-ins."""
+    budget_av = {u["unit"]: u["budget_rent"] for u in (av or {"units": []})["units"]}
+    first = {}
+    for f in rr["future"]:
+        first.setdefault(f["unit"], f)  # one lease per suite: the first future resident
+    sqft = {s["unit"]: s["sqft"] for s in rr["suites"]}
+    budget = {s["unit"]: budget_av.get(s["unit"], s["budget_rent"]) for s in rr["suites"]}
+    fut = {u: f for u, f in first.items() if f["scheduled"] is not None}
+    leased = {u: f for u, f in fut.items() if _leased(f)}
     occ = [s for s in rr["suites"] if s["status"].startswith("Occupied")]
-    non_ex = [s for s in rr["suites"] if not s["status"].startswith("Excluded")]
-    out = {
-        "committed": sum(f["scheduled"] for f in fut), "committedCount": len(fut),
-        "signed": sum(f["scheduled"] for f in leased), "signedCount": len(leased),
-        "inPlace": sum(s["scheduled"] for s in occ), "occupiedCount": len(occ),
-        "futureRent": sum(f["scheduled"] for f in leased),
-        "fullBudget": sum(s["budget_rent"] for s in non_ex), "fullCount": len(non_ex),
-    }
-    if occ:  # stabilised building: average rent in place
-        out["avgSuite"] = round(out["inPlace"] / len(occ))
-    elif leased:  # lease-up: average of signed leases
-        out["avgSuite"] = round(out["signed"] / len(leased))
+    rentable = [s for s in rr["suites"] if not s["status"].startswith("Excluded")]
+    out = {"fullBudget": round(sum(budget[s["unit"]] for s in rentable), 2), "fullCount": len(rentable)}
+    if mode == "leaseup":
+        signed = round(sum(f["scheduled"] for f in leased.values()), 2)
+        signed_budget = round(sum(budget[u] for u in leased), 2)
+        out.update({"signed": signed, "signedCount": len(leased), "signedBudget": signed_budget, "lossToLease": round(signed_budget - signed, 2),
+                    "committed": round(sum(f["scheduled"] for f in fut.values()), 2), "committedCount": len(fut)})
+        if leased:
+            out["avgSuite"] = _half_up(signed / len(leased))
+            out["avgSqft"] = round(signed / sum(sqft[u] for u in leased), 2)
+    else:
+        in_place = round(sum(s["scheduled"] for s in occ), 2)
+        out.update({"inPlace": in_place, "occupiedCount": len(occ), "futureRent": round(sum(f["scheduled"] for f in leased.values()), 2)})
+        if occ:
+            out["avgSuite"] = _half_up(in_place / len(occ))
+            out["avgSqft"] = round(in_place / sum(s["sqft"] for s in occ), 2)
     return out
 
 
@@ -140,7 +156,38 @@ def budget(bva, t12):
         series.pop(0)
     return {"noi": [noi["actual"], noi["budget"], noi["ytd_actual"], noi["ytd_budget"]], "annualNoi": noi["annual_budget"],
             "period": last, "noiMonths": [m for m, _ in series], "noiTrend": [v for _, v in series],
-            "lines": sorted(((x["actual"], x["budget"], x["ytd_actual"], x["ytd_budget"]) for x in bva["groups"]))}
+            "lines": budget_lines(bva)[0], "unknownHeadings": budget_lines(bva)[1]}
+
+
+# Budget vs Actual heading -> plain label shown to the owner. Headings that are subtotals are ignored.
+BUDGET_LABELS = {
+    "Net Rental Income": "Rental income", "Other Income": "Other income", "Administrative Expense": "Administration", "Payroll": "Payroll",
+    "Management Fees": "Management fees", "Advertising & Promotion": "Advertising and promotion",
+    "Telecommunication Services": "Telecommunications", "Utility Expense": "Utilities", "Outside Services": "Outside services",
+    "Contract Services": "Contract services", "Repairs & Maintenance": "Repairs and maintenance",
+    "Turnover & Recoverable Costs": "Turnover costs", "Taxes & Insurance": "Taxes and insurance",
+}
+BUDGET_SUBTOTALS = {"Potential Gross Income", "Effective Gross Income", "Net Operating Income", "Non-operating Expenses", "Net Income"}
+INTEREST_ONLY = "Interest on LMR Bank"
+
+
+def budget_lines(bva):
+    """[[label, month actual, month budget, ytd actual, ytd budget], ...] and the headings the table does not know.
+    A group whose only account is the deposit interest is labelled for what it is."""
+    lines, unknown = [], []
+    for g in bva["groups"]:
+        name = g["name"]
+        if name in BUDGET_SUBTOTALS:
+            continue
+        label = BUDGET_LABELS.get(name)
+        if label is None:
+            unknown.append(name)
+            continue
+        accts = [a["name"] for a in bva["accounts"] if a["group"] == name]
+        if name == "Other Income" and accts == [INTEREST_ONLY]:
+            label = "Interest on last month's rent deposits"
+        lines.append([label, g["actual"], g["budget"], g["ytd_actual"], g["ytd_budget"]])
+    return lines, unknown
 
 
 def funnel(lt):

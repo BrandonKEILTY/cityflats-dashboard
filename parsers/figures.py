@@ -13,17 +13,17 @@ from . import activity_log, derive, registry
 MODES = {"grove": "leaseup", "f47": "stabilised"}
 
 
-def build(folder, prop_id, data_through):
-    r = registry.load(folder)
+def build(folder, prop_id, data_through, property_name=None):
+    r = registry.load(folder, prop_id, property_name)
     mode = MODES[prop_id]
-    out = {"id": prop_id, "dataThrough": data_through, "missing": r["missing"], "warnings": r["warnings"]}
+    out = {"id": prop_id, "dataThrough": data_through, "missing": r["missing"], "unreadable": r["unreadable"], "warnings": r["warnings"]}
     rr, av = r["Rent Roll"], r["Availability"]
     al = activity_log.dedupe(r["Activity Log"]["entries"]) if r["Activity Log"] else None
     if rr and av:
         out["counts"] = derive.counts(rr, av, al)
         out["stack"] = derive.stack(rr, av)
         out["deals"] = derive.deals(rr, mode)
-        out["rent"] = derive.rent(rr, av)
+        out["rent"] = derive.rent(rr, av, mode)
         out["renewals"] = derive.renewals(rr, r["Expiring Leases"])
         out["inventory"] = {"units": [[u["unit"], u["plan"], u["sqft"], u["budget_rent"], u["available_on"] or "", u["status"]] for u in av["units"]],
                             "unleasedMonthly": sum(u["budget_rent"] for u in av["units"] if u["status"] == "Vacant Unrented Ready")}

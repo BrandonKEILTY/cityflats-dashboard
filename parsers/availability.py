@@ -1,44 +1,46 @@
-"""Availability: one row per suite, grouped by unit status."""
+"""Availability, from the Excel text. LAYOUT_CHECKED: no. Written from the PDF's column headings;
+no Excel export of this report has been seen yet."""
 import re
 
-from .common import num, read_lines, header_info
+from . import xlsxtext as x
 
+LAYOUT_CHECKED = False
+KEY = "availability"
 SECTION = re.compile(r"^(?P<name>Vacant Unrented Ready|Vacant Rented Ready|Occupied No Notice|Occupied Notice[A-Za-z ]*|Excluded)(?: \((?P<flag>Available|Unavailable)\))? \(Results: (?P<n>\d+)\)")
-ROW = re.compile(
-    r"^(?P<unit>\d{3}[A-Z]?) (?P<utype>.+?) \d+\.\d\d(?P<plan>[A-Za-z][A-Za-z' ]*?) (?P<sqft>[\d,]+\.\d\d) "
-    r"(?P<budget>[\d,]+\.\d\d) (?P<prior>[\d,]+\.\d\d)(?: (?P<lease>[\d,]+\.\d\d))?(?: ?(?P<moveout>\d{4}-\d\d-\d\d))? "
-    r"(?P<mo>\d+) (?P<days>\d+) (?P<cost>[\d,]+\.\d\d)(?P<tail>.*)$")
-DATES = re.compile(r"\d{4}-\d\d-\d\d")
 
 
-def parse(path):
-    lines = read_lines(path)
-    out = {"report": "Availability", **header_info(lines), "sections": {}, "units": [], "totals": {}}
+def parse(lines):
+    info = x.title_info(lines)
+    rows = [x.cells(l) for l in lines]
+    h = x.header_index(rows, "Bldg-Unit", "Budgeted Rent", "Available On")
+    cols = x.columns(rows[h])
+    out = {"report": "Availability", **info, "sections": {}, "units": [], "totals": {}}
     cur = None
-    for ln in lines:
-        s = ln.strip()
-        m = SECTION.match(s)
+    for r in rows[h + 1:]:
+        first = x.get(r, 0)
+        m = SECTION.match(first) or SECTION.match(" ".join(c.strip() for c in r if c.strip()))
         if m:
             cur = m["name"]
             out["sections"][cur] = {"declared": int(m["n"]), "flag": m["flag"], "found": 0}
             continue
         if cur is None:
             continue
-        if s.startswith("Non-Excluded Units Totals:"):
-            out["totals"]["non_excluded"] = [num(x) for x in re.findall(r"[\d,]+\.\d\d", s)]
+        unit = x.get(r, x.col(cols, "bldg-unit"))
+        if not re.fullmatch(r"\d{3}[A-Z]?", unit):
+            if "totals" in " ".join(r).lower():
+                out["totals"][" ".join(c for c in r[:3] if c.strip())] = [x.num(c) for c in r if re.fullmatch(r"-?[\d.]+", c.strip())]
             continue
-        m = ROW.match(s)
-        if not m:
-            continue
-        tail = m["tail"]
-        dates = DATES.findall(tail)
-        resident = DATES.split(tail)[0].strip() if dates else tail.strip()
-        resident = resident or None
+        cur_rent, fut_rent = x.num(x.get(r, cols.get("current lease rent"))), x.num(x.get(r, cols.get("future lease rent")))
+        avail = x.date(x.get(r, x.col(cols, "available on")))
+        move_in = x.date(x.get(r, cols.get("scheduled move-in")))
+        resident = x.get(r, cols.get("resident")) or None
         out["sections"][cur]["found"] += 1
         out["units"].append({
-            "unit": m["unit"], "unit_type": m["utype"], "plan": m["plan"].strip(), "sqft": num(m["sqft"]),
-            "budget_rent": num(m["budget"]), "prior_rent": num(m["prior"]), "lease_rent": num(m["lease"]),
-            "status": cur, "days_vacant": int(m["days"]), "resident": resident,
-            "dates": dates, "available_on": dates[-1] if dates else None,
-        })
+            "unit": unit, "unit_type": x.get(r, cols.get("unit type")), "plan": x.get(r, x.col(cols, "floor plan")),
+            "sqft": x.num(x.get(r, x.col(cols, "sqft"))), "budget_rent": x.num(x.get(r, x.col(cols, "budgeted rent"))),
+            "prior_rent": x.num(x.get(r, cols.get("prior lease rent"))), "lease_rent": cur_rent if cur_rent is not None else fut_rent,
+            "status": cur, "days_vacant": x.to_number(x.get(r, cols.get("vacant days")), 0), "resident": resident,
+            "dates": [d for d in (move_in, avail) if d], "available_on": avail})
+    if not out["units"]:
+        raise x.LayoutError("availability: no unit rows found")
     return out
