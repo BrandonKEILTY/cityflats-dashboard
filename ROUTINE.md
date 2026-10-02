@@ -32,6 +32,7 @@ Each file lists:
 - `missing`: reports with no sheet for the property. Handle as in section 1, step 4.
 - `unreadable`: a sheet was there but a parser could not read it. **Carry on with the other reports.** For that report keep its last figures, add a `fix` flag naming it and why, and describe it in the summary.
 - `warnings`: pass every one on in the summary. Five reports (Availability, Lease Term Progress, Activity Log, Rentable Items, Expiring Leases) have Excel layouts that have not yet been checked against a real export. Until that changes, say so each day and compare the figures with the PDF text where it is easy to.
+- `renewedSuites`: suites with a renewal; they are already left off `increases` (check 13 fails the feed if one is on the list). `increasesBasis`: include it in the summary every run (the lease start is used for every lease because a rent change during a lease cannot be read). `leaseStartToConfirm`: list each suite in the summary as "lease start to confirm" (Faculty47 305 until Brandon confirms it in Entrata; then remove it from `LEASE_START_TO_CONFIRM` in `parsers/derive.py`).
 - `budgetStatus` (needs `--previous`): `keep` means the report's month is the same as the feed's and nothing changed, so leave the budget section exactly as it is. `restated` lists closed months whose figures changed. `behind` means the report's month is earlier than the feed's: keep the feed's figures and say so in the summary.
 - `budget.unknownHeadings`: income statement headings the label table in `parsers/derive.py` does not know. List them in the summary; do not invent a label.
 
@@ -101,6 +102,7 @@ Finish with a short summary:
 - figures as of close of business yesterday and what changed: new leads, leased, in progress, available, anything overdue and who owes it, tours held, new prospects, new or closed work orders, price changes, renewals or expiring leases, concessions, restated income figures
 - open items and booked tours added or dropped
 - every `missing`, `fix` and `warnings` entry, and which reports came from which package
+- rent increases: `increasesBasis`, any `leaseStartToConfirm` suites ("lease start to confirm"), and suites left off because they are renewed
 - anything worth checking in Entrata (a future resident whose move-in date has passed, reports that disagree, totals that do not add up)
 
 Push a notification (PushNotification, message inside `<routine_summary>` tags) when: the run could not save or could not push the feed file to `main`, a check failed, no Excel arrived, any report is missing or unreadable, a `warnings` entry appears for the first time, or something in Entrata needs Brandon. Lead with the one thing that matters. A clean run sends no notification.

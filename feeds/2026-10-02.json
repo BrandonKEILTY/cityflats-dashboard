@@ -1,6 +1,6 @@
 {
  "asAt": "2026-10-02",
- "generated": "2026-10-02 18:30",
+ "generated": "2026-10-02 19:10",
  "client": "Centennial Land Development LP and Faculty 47 Development LP",
  "short": "Cityflats portfolio",
  "properties": [
@@ -4106,12 +4106,6 @@
     {
      "num": "205",
      "rent": 3655.0,
-     "earliest": "2027-05-01",
-     "noticeBy": "2027-01-31"
-    },
-    {
-     "num": "302",
-     "rent": 4295.0,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
