@@ -13,6 +13,10 @@ from . import activity_log, derive, registry
 MODES = {"grove": "leaseup", "f47": "stabilised"}
 
 
+def income_missing(out):
+    return "income" not in out.get("items", {})
+
+
 def build(folder, prop_id, data_through, property_name=None, previous_feed=None, as_at=None):
     r = registry.load(folder, prop_id, property_name)
     mode = MODES[prop_id]
@@ -77,6 +81,12 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
         gaps.append("leadsWeek: the Activity Log gave no reliable count of new guest cards yet (no saved feed to compare with, or no log), so it is left out (the page shows a dash)")
     if "funnel" in out:  # the report is set to last week, Monday to Sunday: both dates come from the run date
         out["funnel"]["since"], out["funnel"]["until"] = derive.last_week(as_at or derive.add_days(data_through, 1))
+    if rr:  # for the summary: the parking code(s) the income came from, or every code the Charge Code Summary shows
+        names = [c["name"] for c in rr.get("charge_codes", [])]
+        out["parkingCodes"] = [n for n in names if "parking" in (n or "").lower()]
+        out["chargeCodesSeen"] = names
+        if income_missing(out):
+            gaps.append("items.income: no parking charge code in the Rent Roll's Charge Code Summary, so it is left out; codes shown: " + (", ".join(names) or "none"))
     out["notCarried"] = gaps
     return out
 
