@@ -65,15 +65,32 @@ class FeedChecks(unittest.TestCase):
         del self.new["properties"][0]["increases"]
         self.assertTrue(any(f.startswith("9.") and "must be present" in f for f in self.fails()))
         self.new = copy.deepcopy(self.old)
-        row = {"num": "101", "rent": 3000, "newRent": None, "earliest": "2027-05-01", "noticeBy": "2027-01-31"}
+        row = {"num": "101", "rent": 3000, "earliest": "2027-05-01", "noticeBy": "2027-01-31"}
         self.new["properties"][1]["increases"] = [row]
         self.assertEqual(self.fails(), [])
-        for bad, why in ((dict(row, noticeBy="2027-02-01"), "minus 90 days"), (dict(row, newRent=3100), "newRent must stay null"),
+        for bad, why in ((dict(row, noticeBy="2027-02-01"), "minus 90 days"), (dict(row, newRent=3100), "wrong fields"),
                          (dict(row, noticeBy="2027-12-01", earliest="2028-03-01"), "more than 6 months"), ({"num": "101"}, "wrong fields")):
             self.new["properties"][1]["increases"] = [bad]
             self.assertTrue(any(why in f for f in self.fails()), why)
-        self.new["properties"][1]["increases"] = [dict(row, num="2"), dict(row, num="1", noticeBy="2027-01-31"), dict(row, noticeBy="2027-01-30", earliest="2027-04-30")]
+        self.new["properties"][1]["increases"] = [dict(row, num="2"), dict(row, num="1"), dict(row, noticeBy="2027-01-30", earliest="2027-04-30")]
         self.assertTrue(any("not sorted" in f for f in self.fails()))
+
+    def test_no_resident_names_in_notes(self):
+        names = {"f47": ["Nichols, Anne", "Smith, Callum"], "grove": ["Fakename, Ada Marie"]}
+        self.assertEqual(check_feed.check(self.new, self.old, names), [])
+        self.new["properties"][1]["renewals"]["note"] = "Anne Nichols (302) has already renewed."
+        f = check_feed.check(self.new, self.old, names)
+        self.assertTrue(any(x.startswith("12.") and "Nichols" in x for x in f))
+        self.new = copy.deepcopy(self.old)
+        self.new["properties"][1]["workOrders"][0]["notes"] = [["2026-10-01", "Called Callum Smith about the access."]]
+        self.assertTrue(any(x.startswith("12.") for x in check_feed.check(self.new, self.old, names)))
+        self.new = copy.deepcopy(self.old)
+        self.new["properties"][0]["rent"]["note"] = "Lease for Fakename, Ada Marie signed."
+        self.assertTrue(any(x.startswith("12.") for x in check_feed.check(self.new, self.old, names)))
+        # names in the arrears table and prospects are allowed; a plan called Hill or a first name alone is not a name
+        self.new = copy.deepcopy(self.old)
+        self.new["properties"][0]["rent"]["note"] = "The Hill plan; Anne is the property manager."
+        self.assertEqual(check_feed.check(self.new, self.old, names), [])
 
     def test_by_end_stays_inside_12_months(self):
         self.new["properties"][1]["renewals"]["byEnd"].append(["2027-12-28", 1])

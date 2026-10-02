@@ -121,6 +121,12 @@ def add_days(iso, n):
     return d.isoformat()
 
 
+def resident_names(rr):
+    """Every resident named on the Rent Roll (current and future), as the report writes them."""
+    names = [s["resident"] for s in rr["suites"] if s.get("resident")] + [f["resident"] for f in rr["future"] if f.get("resident")]
+    return sorted(set(n.strip() for n in names if n and n.strip()))
+
+
 def leases(rr):
     """Every lease on the Rent Roll: current residents and future residents. One row per lease."""
     out = []
@@ -143,10 +149,10 @@ def renewals(rr, ex, today):
 
 
 def increases(rr, today, window_months=6):
-    """Rent increases, one row per lease: the earliest date a new rent can take effect is 12 months after the rent
-    last changed (the lease start on the Rent Roll), and notice is due 90 days before that. Only leases whose notice
-    date falls by today + 6 months are listed (notices already due are included). newRent stays None until the
-    rule for it is confirmed."""
+    """Rent increases due, one row per lease: {num, rent, earliest, noticeBy}. The dashboard shows when an increase is
+    due, not the amount, so there is no new rent. The earliest date a new rent can take effect is 12 months after the
+    rent last changed (the lease start on the Rent Roll), and notice is due 90 days before that. Only leases whose
+    notice date falls by today + 6 months are listed (notices already due included). today is the run date."""
     horizon = add_months(today, window_months)
     rows = []
     for l in leases(rr):
@@ -155,7 +161,7 @@ def increases(rr, today, window_months=6):
         earliest = add_months(l["start"], 12)
         notice = add_days(earliest, -90)
         if notice <= horizon:
-            rows.append({"num": l["num"], "rent": l["rent"], "newRent": None, "earliest": earliest, "noticeBy": notice})
+            rows.append({"num": l["num"], "rent": l["rent"], "earliest": earliest, "noticeBy": notice})
     return sorted(rows, key=lambda r: (r["noticeBy"], r["num"]))
 
 

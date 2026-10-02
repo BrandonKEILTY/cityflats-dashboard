@@ -133,8 +133,12 @@ class RenewalsAndIncreases(unittest.TestCase):
         # leases start 2026-09-01 (x2): earliest 2027-09-01, notice by 2027-06-03
         self.assertEqual(derive.increases(rr, "2026-09-30"), [])  # notice 2027-06-03 is more than 6 months out
         rows = derive.increases(rr, "2026-12-15")  # window reaches 2027-06-15
-        self.assertEqual([(r["num"], r["rent"], r["earliest"], r["noticeBy"], r["newRent"]) for r in rows],
-                         [("101", 3495, "2027-09-01", "2027-06-03", None), ("102", 3000, "2027-09-01", "2027-06-03", None)])
+        self.assertEqual([(r["num"], r["rent"], r["earliest"], r["noticeBy"]) for r in rows],
+                         [("101", 3495, "2027-09-01", "2027-06-03"), ("102", 3000, "2027-09-01", "2027-06-03")])
+        self.assertTrue(all(set(r) == {"num", "rent", "earliest", "noticeBy"} for r in rows))  # no newRent
+        edge = derive.increases(rr, "2026-12-03")  # window ends 2027-06-03: a notice date on the last day still counts
+        self.assertEqual({r["num"] for r in edge}, {"101", "102"})
+        self.assertEqual(derive.increases(rr, "2026-12-02"), [])
         late = derive.increases(rr, "2027-08-01")  # notices already due are still listed
         self.assertEqual({r["num"] for r in late}, {"101", "102", "202"})
         self.assertEqual(derive.increases(rr, "2027-08-01"), sorted(late, key=lambda r: (r["noticeBy"], r["num"])))
