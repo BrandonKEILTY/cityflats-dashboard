@@ -104,6 +104,47 @@ class LeaseUp(unittest.TestCase):
         self.assertEqual(o["description"], "Test building BID 1 deferred task for December.")
 
 
+class RenewalsAndIncreases(unittest.TestCase):
+    def test_add_months_and_days(self):
+        self.assertEqual(derive.add_months("2026-10-01", 12), "2027-10-01")
+        self.assertEqual(derive.add_months("2028-02-29", 12), "2029-02-28")
+        self.assertEqual(derive.add_months("2026-08-31", 6), "2027-02-28")
+        self.assertEqual(derive.add_days("2027-04-20", -90), "2027-01-20")
+
+    def test_by_end_is_the_next_12_months_only(self):
+        rr = load("f47", STABLE)["Rent Roll"]
+        r = derive.renewals(rr, None, "2026-09-30")
+        # three leases: 102 ends 2027-04-28, 101 ends 2027-08-28, and the future resident in 202 ends 2027-09-28
+        self.assertTrue(all("2026-09-30" <= d <= "2027-09-30" for d, _ in r["byEnd"]))
+        self.assertEqual(sum(c for _, c in r["byEnd"]), 3)
+        self.assertEqual(r["firstEnd"], "2027-04-28")
+        later = derive.renewals(rr, None, "2026-12-01")  # the 2027-09-28 lease is still inside 12 months
+        self.assertEqual(sum(c for _, c in later["byEnd"]), 3)
+        early = derive.renewals(rr, None, "2026-05-01")  # only leases ending by 2027-05-01 count
+        self.assertEqual([d for d, _ in early["byEnd"]], ["2027-04-28"])
+
+    def test_expiring_leases_count_is_separate(self):
+        rr = load("f47", STABLE)["Rent Roll"]
+        self.assertEqual(derive.renewals(rr, {"rows": [1, 2]}, "2026-09-30")["expiring120"], 2)
+        self.assertEqual(derive.renewals(rr, {"rows": []}, "2026-09-30")["expiring120"], 0)
+
+    def test_increases_one_row_per_lease_with_notice_90_days_before(self):
+        rr = load("f47", STABLE)["Rent Roll"]
+        # leases start 2026-09-01 (x2): earliest 2027-09-01, notice by 2027-06-03
+        self.assertEqual(derive.increases(rr, "2026-09-30"), [])  # notice 2027-06-03 is more than 6 months out
+        rows = derive.increases(rr, "2026-12-15")  # window reaches 2027-06-15
+        self.assertEqual([(r["num"], r["rent"], r["earliest"], r["noticeBy"], r["newRent"]) for r in rows],
+                         [("101", 3495, "2027-09-01", "2027-06-03", None), ("102", 3000, "2027-09-01", "2027-06-03", None)])
+        late = derive.increases(rr, "2027-08-01")  # notices already due are still listed
+        self.assertEqual({r["num"] for r in late}, {"101", "102", "202"})
+        self.assertEqual(derive.increases(rr, "2027-08-01"), sorted(late, key=lambda r: (r["noticeBy"], r["num"])))
+
+    def test_lease_up_future_leases_are_not_due(self):
+        rr = load("grove", LEASEUP)["Rent Roll"]
+        self.assertEqual(derive.increases(rr, "2026-10-01"), [])
+        self.assertEqual(derive.renewals(rr, None, "2026-10-01")["byEnd"], [])
+
+
 class FinancialMonth(unittest.TestCase):
     """Only the post month the statements report is used; unchanged months are kept; changed closed months are restated."""
 
