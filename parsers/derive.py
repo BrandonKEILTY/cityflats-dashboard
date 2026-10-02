@@ -148,9 +148,10 @@ def renewals(rr, ex, today):
             "byEnd": [[d, c] for d, c in sorted(by.items())]}
 
 
-# Suites whose lease start is still being confirmed in Entrata: they stay on the list, flagged in the summary.
-# Remove a suite from here once its start date is confirmed.
-LEASE_START_TO_CONFIRM = {"f47": ["305"]}
+# Suites whose lease start is still being confirmed in Entrata: they stay on the list, flagged in the summary
+# as "lease start to confirm". Add {"property id": ["suite"]} here; remove it once the date is confirmed.
+# Empty now: Faculty47 305 was confirmed (lease start 2026-05-01) and removed.
+LEASE_START_TO_CONFIRM = {}
 
 
 def renewed_units(rr, ar=None):
