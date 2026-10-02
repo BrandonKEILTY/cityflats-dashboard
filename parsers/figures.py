@@ -22,6 +22,7 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
     if rr:  # these need the Rent Roll only
         out["residents"] = derive.resident_names(rr)  # for the "no resident names in notes" check
         out["renewals"] = derive.renewals(rr, r["Expiring Leases"], data_through)
+        out["renewals"]["mtm"] = derive.mtm_count(rr, as_at or derive.add_days(data_through, 1))
         renewed = derive.renewed_units(rr, r["Resident Aged Receivables"])
         out["renewedSuites"] = renewed
         out["increases"] = derive.increases(rr, as_at or derive.add_days(data_through, 1), renewed)
@@ -49,6 +50,9 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
         out["concessions"] = derive.concessions(r["Concessions"], rr)
     if r["Rentable Items Availability"]:
         out["items"] = derive.parking(r["Rentable Items Availability"])
+        income = derive.parking_income(rr) if rr else None
+        if income is not None:
+            out["items"]["income"] = income
     if r["Income Statement - Budget vs Actual"] and r["Income Statement - Trailing 12"]:
         out["budget"] = derive.budget(r["Income Statement - Budget vs Actual"], r["Income Statement - Trailing 12"])
         if previous_feed:
@@ -59,6 +63,12 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
     if al is not None:
         out["activity"] = {"date": r["Activity Log"].get("activity_date"), "entries": al}
     out["snapshot"] = derive.snapshot(r, data_through)
+    # Fields the page can show but today's reports do not carry. Left out of the feed, never estimated.
+    gaps = ["leadsWeek: the Activity Log lists Notes and Tours only, with no guest card created activity, and covers one day",
+            "funnel.since: the Lease Term Progress Summary shows only an as-of date, not the start of its period"]
+    if rr and derive.parking_income(rr) is None:
+        gaps.append("items.income: the Rent Roll carries no parking charge codes")
+    out["notCarried"] = gaps
     return out
 
 

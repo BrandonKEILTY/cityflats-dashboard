@@ -1,6 +1,6 @@
 {
  "asAt": "2026-10-02",
- "generated": "2026-10-02 19:10",
+ "generated": "2026-10-02 20:05",
  "client": "Centennial Land Development LP and Faculty 47 Development LP",
  "short": "Cityflats portfolio",
  "properties": [
@@ -1374,7 +1374,8 @@
       "2027-07-19",
       1
      ]
-    ]
+    ],
+    "mtm": 0
    },
    "arrears": {
     "source": "Resident Aged Receivables",
@@ -3023,7 +3024,8 @@
       2
      ]
     ],
-    "note": "No leases expire in the next four months. Suite 302 has already renewed. Eight leases end 2027-04-28, one 2027-06-28, seven 2027-08-28 and two 2027-09-28."
+    "note": "No leases expire in the next four months. Suite 302 has already renewed. Eight leases end 2027-04-28, one 2027-06-28, seven 2027-08-28 and two 2027-09-28.",
+    "mtm": 0
    },
    "arrears": {
     "source": "Resident Aged Receivables, Oct 2026",

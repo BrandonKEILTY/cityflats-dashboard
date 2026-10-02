@@ -10,10 +10,10 @@ Bldg-Unit	Unit Type	SQFT	Unit Status	Resident	Budgeted Rent	Scheduled Charges	Ba
 301B	The Heritage	1329	Vacant Unrented Ready	-- Vacant --	1515	0		0
 	 Total:	3544			7265	6495	-2330	6495
 Status Summary			Charge Code Summary
-Description	Unit Count	Percent
-Occupied No Notice	2	0.5
-Total Occupied Units	2	0.5
-Vacant Rented Ready	1	0.25
+Description	Unit Count	Percent	Charge Code	Scheduled	Charge Code Type
+Occupied No Notice	2	0.5	Ledger: Resident
+Total Occupied Units	2	0.5	Delta Rent	170	Rent
+Vacant Rented Ready	1	0.25	Parking, Residents	400	Rent
 Vacant Unrented Ready	1	0.25
 Total Rentable Units	4	1
 Future Resident Details
