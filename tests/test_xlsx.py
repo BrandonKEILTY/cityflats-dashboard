@@ -5,6 +5,7 @@ The real Cityflats workbooks are in fixtures/xlsx_text (git-ignored; resident na
 assumed_layouts.txt covers reports whose Excel layout has not been seen yet: those tests only exercise the code.
 """
 import glob
+import json
 import os
 import unittest
 
@@ -103,6 +104,56 @@ class LeaseUp(unittest.TestCase):
         self.assertEqual(o["description"], "Test building BID 1 deferred task for December.")
 
 
+class FinancialMonth(unittest.TestCase):
+    """Only the post month the statements report is used; unchanged months are kept; changed closed months are restated."""
+
+    def setUp(self):
+        r = load("grove", LEASEUP)
+        self.new = derive.budget(r["Income Statement - Budget vs Actual"], r["Income Statement - Trailing 12"])
+
+    def old_from(self, new):
+        return {"period": "Sep 2026", "noi": list(new["noi"]), "annualNoi": new["annualNoi"], "lines": [list(l) for l in new["lines"]],
+                "noiMonths": list(new["noiMonths"]), "noiTrend": list(new["noiTrend"])}
+
+    def test_partial_current_month_is_never_used(self):
+        self.assertEqual(self.new["noiMonths"][-1], "2026-09")  # the sheet also has an Oct 2026 column (partial): not shown
+        self.assertNotIn("2026-10", self.new["noiMonths"])
+
+    def test_same_month_same_figures_is_kept(self):
+        st = derive.budget_status(self.new, self.old_from(self.new))
+        self.assertTrue(st["keep"])
+        self.assertEqual((st["restated"], st["periodChanged"], st["behind"]), ([], False, False))
+
+    def test_new_month_is_not_kept_and_not_restated(self):
+        old = self.old_from(self.new)
+        old["period"] = "Aug 2026"
+        old["noiMonths"], old["noiTrend"] = old["noiMonths"][:-1], old["noiTrend"][:-1]
+        st = derive.budget_status(self.new, old)
+        self.assertFalse(st["keep"])
+        self.assertTrue(st["periodChanged"])
+        self.assertEqual(st["restated"], [])
+
+    def test_changed_closed_month_is_restated(self):
+        old = self.old_from(self.new)
+        old["noiTrend"][-3] += 100  # an earlier closed month now reads differently
+        st = derive.budget_status(self.new, old)
+        self.assertEqual(st["restated"], [self.new["noiMonths"][-3]])
+        self.assertFalse(st["keep"])
+        old = self.old_from(self.new)
+        old["noi"][0] += 50  # the reported month itself changed
+        self.assertEqual(derive.budget_status(self.new, old)["restated"], ["2026-09"])
+
+    def test_report_month_going_backwards_keeps_the_feed(self):
+        old = self.old_from(self.new)
+        old["period"] = "Oct 2026"
+        st = derive.budget_status(self.new, old)
+        self.assertTrue(st["behind"] and st["keep"])
+
+    def test_month_label(self):
+        self.assertEqual(derive.month_of_label("Sep 2026 (run 2026-10-01)"), "2026-09")
+        self.assertIsNone(derive.month_of_label(""))
+
+
 class Stabilised(unittest.TestCase):
     def setUp(self):
         self.r = load("f47", STABLE)
@@ -181,6 +232,9 @@ class MissingAndUnreadable(unittest.TestCase):
         self.assertEqual(f["snapshot"]["date"], "2026-09-30")
         self.assertEqual(len(f["workOrders"]), 2)
         self.assertNotIn("inventory", f)
+        prev = json.load(open(os.path.join(ROOT, "feeds", "2026-10-02.json")))
+        f2 = figures.build(DATA, "f47", "2026-09-30", property_name=STABLE, previous_feed=prev)
+        self.assertIn("budgetStatus", f2)
 
 
 class AssumedLayouts(unittest.TestCase):
