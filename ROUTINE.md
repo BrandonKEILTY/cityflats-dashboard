@@ -22,16 +22,17 @@ Read `README-for-Claude-Code.md` and `daily-job-rules.md` first. They define wha
 ## 2. Run the parsers
 
 ```
-python -m parsers.figures work/YYYY-MM-DD grove --data-through YYYY-MM-DD > work/YYYY-MM-DD/grove.json
-python -m parsers.figures work/YYYY-MM-DD f47   --data-through YYYY-MM-DD > work/YYYY-MM-DD/f47.json
+python -m parsers.figures work/YYYY-MM-DD grove --data-through YYYY-MM-DD --previous work/YYYY-MM-DD/previous.json > work/YYYY-MM-DD/grove.json
+python -m parsers.figures work/YYYY-MM-DD f47   --data-through YYYY-MM-DD --previous work/YYYY-MM-DD/previous.json > work/YYYY-MM-DD/f47.json
 ```
 
-Every number comes from these two files. Do not read figures off the spreadsheets by eye, and do not type a figure from memory.
+`previous.json` is the feed read in section 4, step 1, so read the current `dash/feed` before running these. Every number comes from these two files. Do not read figures off the spreadsheets by eye, and do not type a figure from memory.
 
 Each file lists:
 - `missing`: reports with no sheet for the property. Handle as in section 1, step 4.
 - `unreadable`: a sheet was there but a parser could not read it. **Carry on with the other reports.** For that report keep its last figures, add a `fix` flag naming it and why, and describe it in the summary.
 - `warnings`: pass every one on in the summary. Five reports (Availability, Lease Term Progress, Activity Log, Rentable Items, Expiring Leases) have Excel layouts that have not yet been checked against a real export. Until that changes, say so each day and compare the figures with the PDF text where it is easy to.
+- `budgetStatus` (needs `--previous`): `keep` means the report's month is the same as the feed's and nothing changed, so leave the budget section exactly as it is. `restated` lists closed months whose figures changed. `behind` means the report's month is earlier than the feed's: keep the feed's figures and say so in the summary.
 - `budget.unknownHeadings`: income statement headings the label table in `parsers/derive.py` does not know. List them in the summary; do not invent a label.
 
 Rulings built into the parsers are in `daily-job-rules.md` ("How the figures are read"). Expiring Leases that says "returned no data" means zero expiring leases. Its flag stays until a run actually has rows: say in the summary every day that its row layout is still untested, and the first time it has rows, say so and check them against the report.
@@ -62,7 +63,7 @@ For each property, replace these from its parser file, keeping the structure and
 | `funnel` | `funnel`: `stages`, `total`, `avgTotal` |
 | `concessions` | `concessions`: `units`, `total`. Write `note`. |
 | `items` | `items`: `list`, `occupied`, `total`. Write `note` with the rates. |
-| `budget` | `budget`: `lines`, `noi`, `annualNoi`, `noiMonths`, `noiTrend`, `period`. Write `note`. |
+| `budget` | Use only the post month the income statements report (they are set to the prior post month); never compute or show a partial current month. If `budgetStatus.keep` is true, leave the whole budget section as it is. Otherwise take `lines`, `noi`, `annualNoi`, `noiMonths`, `noiTrend` and `period` from the parser. If `budgetStatus.restated` lists months, update them and write "restated" in `note` (say which months and what moved), and again in the summary. Write `note` under the writing rules. |
 | `workOrders` | `workOrders` (open orders only). Per order: `ref`, `unit`, `status`, `created`, `due`, `age` = `days_open`, `vendor` exactly as reported. Write a short `problem` for the owner from `problem` and `description`. Keep each order's earlier `notes` from the previous feed and add today's note first if it changed. Never copy caller names, phone numbers, emails or door and lockbox codes. An order that disappeared is closed: drop it and mention it in the summary. |
 | `history` | Append `snapshot` (dated `dataThrough`). If that date is already there, replace only that entry. Never change earlier entries. A `null` field stays null. |
 | `prospects`, `toursDate` | From `activity.entries` (already de-duplicated). For each entry find the prospect by name (add if new) and add `[date time, type, short cleaned note]` at the top of `entries`, skipping any already present (same name, date and time, type). Update `status`, `unit`, `agent`. Remove a prospect once the lease is approved or the guest card or application is cancelled or archived. `toursDate` = `activity.date`. |

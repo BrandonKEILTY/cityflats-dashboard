@@ -63,6 +63,17 @@ def check(new, old):
             for prev, cur in zip(before["history"], p["history"]):
                 if prev["date"] != new["dataThrough"] and prev != cur:
                     fails.append(f"6. {pid}: an earlier history snapshot ({prev['date']}) changed")
+        b = p.get("budget") or {}
+        if b.get("noiMonths"):
+            this_month = new["asAt"][:7]
+            if b["noiMonths"][-1] >= this_month:
+                fails.append(f"8. {pid}: budget shows {b['noiMonths'][-1]}, which is not a closed month (run date month {this_month})")
+            label = b.get("period", "")
+            m = re.match(r"^([A-Z][a-z]{2}) (\d{4})", label)
+            if m:
+                mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].index(m.group(1)) + 1
+                if f"{m.group(2)}-{mon:02d}" != b["noiMonths"][-1]:
+                    fails.append(f"8. {pid}: budget period {label!r} does not match its last month {b['noiMonths'][-1]}")
         for k in CLIENT_KEYS:
             for path, v in walk(p.get(k)):
                 if path.endswith("/source"):  # source labels are for KEILTY; the page does not show them
