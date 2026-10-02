@@ -49,6 +49,7 @@ Update the Cityflats Dashboard for Brandon Ackerman (KEILTY Realty Management In
 These apply to every "note" and every sentence written into data.js: arrears.note, concessions.note, items.note, renewals.note, rent.note, budget.note, work order notes and open items.
 
 - Write for the owner: plain, short and factual.
+- No resident names in any note or sentence. Names belong only in the arrears table and the prospects list. Refer to a suite instead ("Suite 302 has already renewed").
 - Do not name reports or systems ("Rent Roll", "Expiring Leases report", "Activity Log", "package", "Command Center").
 - Do not give report run times.
 - Do not mention data problems, mismatches, report totals that do not add up, or figures still to be confirmed. Send those to Brandon in the summary.
@@ -109,7 +110,7 @@ Examples:
   - deals
   - rent.*
   - renewals.byEnd: [date, count] pairs for lease ends in the next 12 months only (current and future residents)
-  - increases: one row per lease, {num, rent, newRent, earliest, noticeBy}. earliest = lease start + 12 months; noticeBy = earliest minus 90 days; only rows whose noticeBy is by dataThrough + 6 months; newRent stays null until Brandon confirms the rule
+  - increases: one row per lease, {num, rent, earliest, noticeBy}; no new rent (the dashboard shows when an increase is due, not the amount). earliest = lease start + 12 months; noticeBy = earliest minus 90 days; only rows whose noticeBy is by the run date + 6 months, notices already due included
 - Status rules:
   - occupied = current resident
   - leased (Grove) or "Leased, moving in" (F47) = future resident with last month's rent received (Deposit Held > 0, or a negative Balance / Pre-Payment)
@@ -125,7 +126,7 @@ Examples:
   - renewals.expiring120 (number of leases on the report)
   - renewals.source "Expiring Leases"
   - renewals.note
-  - renewals.rows, one per lease, as {unit, end, status, rent, newRent}
+  - renewals.rows, one per lease, as {unit, end, status, rent} (no new rent: the dashboard shows when, not how much)
 - Note any resident whose Lease Status on the receivables report reads "Renewed".
 
 ### Resident Aged Receivables (arrears)
