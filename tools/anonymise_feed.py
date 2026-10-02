@@ -26,7 +26,7 @@ def feed_names(feed):
 
 
 def canon(name):
-    """The same person written 'Smith, Callum' or 'Callum Smith' gets one key."""
+    """The same person written 'Doe, Jane' or 'Jane Doe' gets one key."""
     name = " ".join(name.split())
     if "," in name:
         last, first = [x.strip() for x in name.split(",", 1)]
@@ -62,7 +62,7 @@ def placeholders(residents, prospects, extra_residents=(), label_r="Resident", l
 
 
 def replace_names(text, mapping):
-    # longest names first, so "Ma Theresa Arce" is replaced before a shorter form could cut into it
+    # longest names first, so "Ana Marie Doe" is replaced before a shorter form could cut into it
     for name in sorted(mapping, key=len, reverse=True):
         for pat in name_patterns(name):
             text = pat.sub(mapping[name], text)
