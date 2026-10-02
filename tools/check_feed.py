@@ -35,7 +35,50 @@ def add_months(iso, n):
     return f"{y + m0 // 12:04d}-{m0 % 12 + 1:02d}-{d:02d}"
 
 
-def check(new, old):
+def name_patterns(name):
+    """Patterns for one person written 'Last, First Middle' (as Entrata does) or 'First Last' (as the feed does).
+    Last name alone is not matched: plan names and ordinary words share them."""
+    name = " ".join(name.split())
+    if "," in name:
+        last, first = [x.strip() for x in name.split(",", 1)]
+    else:
+        parts = name.split()
+        if len(parts) < 2:
+            return []
+        first, last = parts[0], " ".join(parts[1:])
+    ft = first.split()[0] if first else ""
+    if not ft or not last or len(ft) < 2 or len(last) < 3:
+        return []
+    return [re.compile(rf"\b{re.escape(ft)}\s+(?:[\w.'-]+\s+){{0,2}}{re.escape(last)}\b", re.I),
+            re.compile(rf"\b{re.escape(last)},\s*{re.escape(ft)}\b", re.I)]
+
+
+def known_names(prop, rent_roll_names):
+    """Rent Roll residents plus everyone already named in the arrears table and the prospects list."""
+    names = list(rent_roll_names)
+    names += [r[1] for r in (prop.get("arrears") or {}).get("detail", []) or [] if len(r) > 1 and r[1]]
+    names += [p["name"] for p in prop.get("prospects", []) or [] if p.get("name")]
+    return names
+
+
+def name_hits(prop, rent_roll_names):
+    """Strings outside the arrears table and the prospects list that contain a resident's name."""
+    pats = [(n, pt) for n in known_names(prop, rent_roll_names) for pt in name_patterns(n)]
+    hits = []
+    for k, v in prop.items():
+        if k == "prospects":
+            continue
+        for path, text in walk(v, f"/{k}"):
+            if not isinstance(text, str) or path.startswith("/arrears/detail"):
+                continue
+            for n, pt in pats:
+                if pt.search(text):
+                    hits.append((path, n, text))
+                    break
+    return hits
+
+
+def check(new, old, names=None):
     fails = []
     text = json.dumps(new)
     for bad in ("NaN", "undefined", "Infinity"):
@@ -82,13 +125,13 @@ def check(new, old):
                 mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].index(m.group(1)) + 1
                 if f"{m.group(2)}-{mon:02d}" != b["noiMonths"][-1]:
                     fails.append(f"8. {pid}: budget period {label!r} does not match its last month {b['noiMonths'][-1]}")
-        # rent increases: a list of rows with the agreed fields; newRent stays null until the rule is confirmed
+        # rent increases: a list of {num, rent, earliest, noticeBy}; the page shows when an increase is due, not the amount (no newRent)
         inc = p.get("increases")
         if not isinstance(inc, list):
             fails.append(f"9. {pid}: increases must be present and a list (use [] when there are none)")
         else:
             for r in inc:
-                if set(r) != {"num", "rent", "newRent", "earliest", "noticeBy"}:
+                if set(r) != {"num", "rent", "earliest", "noticeBy"}:
                     fails.append(f"9. {pid}: increases row has the wrong fields: {sorted(r)}")
                     continue
                 if not (ISO.match(str(r["earliest"])) and ISO.match(str(r["noticeBy"]))):
@@ -98,10 +141,8 @@ def check(new, old):
                 e = date.fromisoformat(r["earliest"])
                 if date.fromisoformat(r["noticeBy"]) != e - timedelta(days=90):
                     fails.append(f"9. {pid}: increases {r['num']}: noticeBy is not earliest minus 90 days")
-                if r["noticeBy"] > add_months(new["dataThrough"], 6):
+                if r["noticeBy"] > add_months(new["asAt"], 6):
                     fails.append(f"9. {pid}: increases {r['num']}: notice date {r['noticeBy']} is more than 6 months out")
-                if r["newRent"] is not None:
-                    fails.append(f"9. {pid}: increases {r['num']}: newRent must stay null until the rule is confirmed")
             keys = [(r["noticeBy"], r["num"]) for r in inc if isinstance(r, dict) and "noticeBy" in r]
             if keys != sorted(keys):
                 fails.append(f"9. {pid}: increases are not sorted by notice date")
@@ -121,6 +162,8 @@ def check(new, old):
         for r in (p.get("arrears") or {}).get("detail", []) or []:
             if str(r[2]).lower().startswith("former") and "collections" in " ".join(map(str, r[8:])).lower() and "collections" not in str(r[2]).lower():
                 fails.append(f"11. {pid}: arrears {r[0]} {r[1]}: a former resident in collections must read 'Former resident, with collections'")
+        for path, who, text in name_hits(p, (names or {}).get(pid, [])):
+            fails.append(f"12. {pid}{path}: names a resident ({who}); names belong only in the arrears table and prospects: {text[:70]!r}")
         for k in CLIENT_KEYS:
             for path, v in walk(p.get(k)):
                 if path.endswith("/source"):  # source labels are for KEILTY; the page does not show them
@@ -139,8 +182,15 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("new")
     ap.add_argument("old")
+    ap.add_argument("--figures", action="append", default=[], help="a parsers.figures output (grove.json / f47.json); gives the Rent Roll names. Repeat for each property.")
     a = ap.parse_args()
-    f = check(json.load(open(a.new)), json.load(open(a.old)))
+    names = {}
+    for path in a.figures:
+        fg = json.load(open(path))
+        names[fg["id"]] = fg.get("residents", [])
+    if not names:
+        print("note: no --figures given, so only names already in the arrears table and prospects are checked, not the Rent Roll")
+    f = check(json.load(open(a.new)), json.load(open(a.old)), names)
     for x in f:
         print("FAIL", x)
     print("feed checks:", "FAILED" if f else "passed")
