@@ -174,8 +174,28 @@ class RenewalsAndIncreases(unittest.TestCase):
             derive.LEASE_START_TO_CONFIRM.clear()
             derive.LEASE_START_TO_CONFIRM.update(old)
         self.assertEqual(f["leaseStartToConfirm"], ["101"])  # 999 is not on the list, so it is not reported
-        self.assertIn("lease start", f["increasesBasis"])
         self.assertEqual(f["renewedSuites"], [])
+        self.assertNotIn("increasesBasis", f)  # no --previous, so no way to say the list changed
+
+    def test_basis_line_only_when_the_increases_list_changes(self):
+        now = figures.build(DATA, "f47", "2026-12-14", property_name=STABLE, as_at="2026-12-15")["increases"]
+        self.assertEqual([r["num"] for r in now], ["101", "102"])
+
+        def prev(nums):
+            return {"properties": [{"id": "f47", "increases": [{"num": n} for n in nums]}]}
+
+        same = figures.build(DATA, "f47", "2026-12-14", property_name=STABLE, as_at="2026-12-15", previous_feed=prev(["101", "102"]))
+        self.assertEqual(same["increasesChange"], {"added": [], "dropped": []})
+        self.assertNotIn("increasesBasis", same)
+        added = figures.build(DATA, "f47", "2026-12-14", property_name=STABLE, as_at="2026-12-15", previous_feed=prev(["101"]))
+        self.assertEqual(added["increasesChange"], {"added": ["102"], "dropped": []})
+        self.assertIn("lease start", added["increasesBasis"])
+        dropped = figures.build(DATA, "f47", "2026-12-14", property_name=STABLE, as_at="2026-12-15", previous_feed=prev(["101", "102", "303"]))
+        self.assertEqual(dropped["increasesChange"], {"added": [], "dropped": ["303"]})
+        self.assertIn("lease start", dropped["increasesBasis"])
+
+    def test_no_suite_is_waiting_for_a_lease_start_confirmation(self):
+        self.assertEqual(derive.LEASE_START_TO_CONFIRM, {})
 
     def test_lease_up_future_leases_are_not_due(self):
         rr = load("grove", LEASEUP)["Rent Roll"]

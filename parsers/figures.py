@@ -25,8 +25,14 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
         renewed = derive.renewed_units(rr, r["Resident Aged Receivables"])
         out["renewedSuites"] = renewed
         out["increases"] = derive.increases(rr, as_at or derive.add_days(data_through, 1), renewed)
-        out["increasesBasis"] = ("Rent increases use the lease start on the Rent Roll for every lease; a rent change during a lease "
-                                 "cannot be read from the Rent Roll columns, so it is not used. Renewed suites are left off.")
+        if previous_feed:  # say how the list is built only on a morning it changes (a suite added or dropped)
+            prev = next((p for p in previous_feed["properties"] if p["id"] == prop_id), {})
+            was = {i["num"] for i in prev.get("increases", []) or []}
+            now = {i["num"] for i in out["increases"]}
+            out["increasesChange"] = {"added": sorted(now - was), "dropped": sorted(was - now)}
+            if now != was:
+                out["increasesBasis"] = ("Rent increases use the lease start on the Rent Roll for every lease; a rent change during a lease "
+                                         "cannot be read from the Rent Roll columns, so it is not used. Renewed suites are left off.")
         out["leaseStartToConfirm"] = [u for u in derive.LEASE_START_TO_CONFIRM.get(prop_id, []) if any(i["num"] == u for i in out["increases"])]
     if rr and av:
         out["counts"] = derive.counts(rr, av, al)
