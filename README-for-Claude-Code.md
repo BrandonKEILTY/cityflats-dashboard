@@ -85,6 +85,10 @@ The same report is read the same way every morning. One parser per report, commi
 
 The five on the right are read with the same header-driven approach, but until a real Command Center Excel export of each has been run through them, every run lists them under `warnings` so the figures get a look. Once a real export has been compared and tests added, set `LAYOUT_CHECKED = True` in that module.
 
+### Checking the five unchecked layouts
+
+When the first real Command Center Excel arrives (Availability, Lease Term Progress, Activity Log, Rentable Items, Expiring Leases): save each attachment's text into `work/YYYY-MM-DD/`, run `python tools/layout_report.py work/YYYY-MM-DD grove` (and `f47`), and compare what it reads (counts, totals, first rows) with the same report's PDF text. When a report matches, add a test from the real export (fake the names), set `LAYOUT_CHECKED = True` in its module, and open a small pull request. **Expiring Leases stays flagged until a run actually has rows**; "returned no data" does not count as a match for the row layout. Say so in the summary every day until then.
+
 ### How to run the parsers
 
 ```

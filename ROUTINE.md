@@ -34,7 +34,7 @@ Each file lists:
 - `warnings`: pass every one on in the summary. Five reports (Availability, Lease Term Progress, Activity Log, Rentable Items, Expiring Leases) have Excel layouts that have not yet been checked against a real export. Until that changes, say so each day and compare the figures with the PDF text where it is easy to.
 - `budget.unknownHeadings`: income statement headings the label table in `parsers/derive.py` does not know. List them in the summary; do not invent a label.
 
-Rulings built into the parsers are in `daily-job-rules.md` ("How the figures are read"). Expiring Leases that says "returned no data" means zero expiring leases. The first time it has rows, say so in the summary.
+Rulings built into the parsers are in `daily-job-rules.md` ("How the figures are read"). Expiring Leases that says "returned no data" means zero expiring leases. Its flag stays until a run actually has rows: say in the summary every day that its row layout is still untested, and the first time it has rows, say so and check them against the report.
 
 ## 3. Command Center, read only
 
@@ -92,7 +92,7 @@ These are the checks in README section 6. If either fails, **stop, change nothin
 1. `ArtifactData set` on the dashboard URL, collection `dash`, document `feed`, with `if_version` = the version read in section 4. Data: `json` (the whole feed as JSON text), `asAt`, `dataThrough`, `generated`. Use `file_path` to send it. Do not republish the page.
 2. If the write is refused for a version change, re-read, rebuild from the new version and write again.
 3. If the write needs approval or fails for any other reason, do not work around it: push a notification.
-4. Copy the feed to `feeds/YYYY-MM-DD.json` in the repository, commit it with a short message, and push to the branch you are on. Do not open a pull request.
+4. Copy the feed to `feeds/YYYY-MM-DD.json` in the repository and commit only that file with a short message. Push it **straight to `main`**: `git pull --rebase origin main`, then `git push origin HEAD:main`. No branch and no pull request. If the push is refused, say so in the summary and send a notification; do not push anywhere else.
 
 ## 7. Summary and notification
 
@@ -102,6 +102,6 @@ Finish with a short summary:
 - every `missing`, `fix` and `warnings` entry, and which reports came from which package
 - anything worth checking in Entrata (a future resident whose move-in date has passed, reports that disagree, totals that do not add up)
 
-Push a notification (PushNotification, message inside `<routine_summary>` tags) when: the run could not save, a check failed, no Excel arrived, any report is missing or unreadable, a `warnings` entry appears for the first time, or something in Entrata needs Brandon. Lead with the one thing that matters. A clean run sends no notification.
+Push a notification (PushNotification, message inside `<routine_summary>` tags) when: the run could not save or could not push the feed file to `main`, a check failed, no Excel arrived, any report is missing or unreadable, a `warnings` entry appears for the first time, or something in Entrata needs Brandon. Lead with the one thing that matters. A clean run sends no notification.
 
 After the first save that uses the parsers, and on any run that changed how the feed is built, tell Brandon that a parser-built `dash/feed` is saved so he can render-check it against the published page.
