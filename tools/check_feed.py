@@ -176,22 +176,16 @@ def check(new, old, names=None, renewed=None):
         mtm = (p.get("renewals") or {}).get("mtm")
         if not (isinstance(mtm, int) and not isinstance(mtm, bool) and mtm >= 0):
             fails.append(f"14. {pid}: renewals.mtm must be a count of month-to-month leases, 0 if none (got {mtm!r})")
-        # New leads this week = the sum of the stored daily counts (history[].newCards, counts only) from Thursday
-        # through dataThrough. Left out of the feed while no day has a count.
-        for s in p.get("history", []):
-            if "newCards" in s and not (isinstance(s["newCards"], int) and not isinstance(s["newCards"], bool) and s["newCards"] >= 0):
-                fails.append(f"15. {pid}: history {s.get('date')} newCards must be a whole number, 0 or more, with no names (got {s['newCards']!r})")
-        wk_start = week_start(new["dataThrough"])
-        counts_in_week = [s["newCards"] for s in p.get("history", []) if "newCards" in s and wk_start <= s.get("date", "") <= new["dataThrough"]
-                          and isinstance(s["newCards"], int)]
+        # New leads = the Lease Term Progress "Guest card completed" count as reported (funnel.leads); never summed.
         if "leadsWeek" in p:
             lw = p["leadsWeek"]
             if not (isinstance(lw, int) and not isinstance(lw, bool) and lw >= 0):
                 fails.append(f"15. {pid}: leadsWeek must be a whole number of guest cards, 0 or more (got {lw!r})")
-            elif lw != sum(counts_in_week):
-                fails.append(f"15. {pid}: leadsWeek is {lw} but the daily counts from {wk_start} to {new['dataThrough']} add to {sum(counts_in_week)}")
-        elif counts_in_week:
-            fails.append(f"15. {pid}: leadsWeek is missing although daily counts exist for the week from {wk_start}")
+            elif lw != _reported_leads(p):
+                fails.append(f"15. {pid}: leadsWeek is {lw} but the Lease Term Progress guest card count in funnel.leads is {_reported_leads(p)!r}")
+        for s_ in p.get("history", []):
+            if "newCards" in s_:
+                fails.append(f"15. {pid}: history {s_.get('date')} has newCards; daily counts are no longer kept")
         since = (p.get("funnel") or {}).get("since")
         if since is not None and not (ISO.match(str(since)) and str(since) <= new["dataThrough"]):
             fails.append(f"16. {pid}: funnel.since must be a YYYY-MM-DD date on or before dataThrough (got {since!r})")
@@ -219,6 +213,12 @@ def check(new, old, names=None, renewed=None):
             if p.get(k):
                 fails.append(f"{pid}.{k} must stay empty")
     return fails
+
+
+def _reported_leads(p):
+    """The Lease Term Progress "Guest card completed" count: the first stage of the funnel."""
+    st = (p.get("funnel") or {}).get("stages") or []
+    return st[0][1] if st and len(st[0]) > 1 else None
 
 
 def gaps(new):

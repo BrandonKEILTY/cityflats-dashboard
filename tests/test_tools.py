@@ -146,43 +146,20 @@ class NewFields(unittest.TestCase):
         self.new["properties"][0]["renewals"]["mtm"] = 2
         self.assertEqual(check_feed.check(self.new, self.old), [])
 
-    def test_leads_week_must_equal_the_stored_daily_counts(self):
+    def test_leads_week_is_the_reported_guest_card_count(self):
         p = self.new["properties"][0]
-        h = p["history"]
-        self.assertEqual(h[-1]["date"], "2026-10-01")  # a Thursday: the week starts today
-        h[-1]["newCards"] = 3
-        p["leadsWeek"] = 3
+        n = p["funnel"]["stages"][0][1]
+        p["leadsWeek"] = n
         self.assertEqual(check_feed.check(self.new, self.old), [])
-        p["leadsWeek"] = 4  # not the sum of the counts
-        self.assertTrue(any(f.startswith("15.") and "add to 3" in f for f in check_feed.check(self.new, self.old)))
-        del p["leadsWeek"]  # counts exist but the feed does not use them
-        self.assertTrue(any(f.startswith("15.") and "missing" in f for f in check_feed.check(self.new, self.old)))
-
-    def test_leads_week_sums_thursday_to_dataThrough_only(self):
-        p = self.new["properties"][0]
-        h = p["history"]
-        h[-2]["newCards"] = 9  # 2026-09-30, a Wednesday: last week's
-        self.old["properties"][0]["history"][-2]["newCards"] = 9  # already stored yesterday; earlier days never change
-        h[-1]["newCards"] = 2
-        p["leadsWeek"] = 2
-        self.assertEqual(check_feed.check(self.new, self.old), [])
-        p["leadsWeek"] = 11
-        self.assertTrue(any(f.startswith("15.") for f in check_feed.check(self.new, self.old)))
-
-    def test_daily_counts_are_counts_only(self):
-        p = self.new["properties"][0]
-        for bad in (-1, 1.5, "Fake Name", ["Fake Name"], True):
-            p["history"][-1]["newCards"] = bad
-            self.assertTrue(any(f.startswith("15.") and "no names" in f for f in check_feed.check(self.new, self.old)), bad)
-
-    def test_leads_week_zero_is_valid_when_counted(self):
-        p = self.new["properties"][0]
-        p["history"][-1]["newCards"] = 0
-        p["leadsWeek"] = 0
-        self.assertEqual(check_feed.check(self.new, self.old), [])
-        for bad in (-1, 2.5, None, "3"):
+        p["leadsWeek"] = n + 1  # not what the report gave
+        self.assertTrue(any(f.startswith("15.") and "funnel.leads" in f for f in check_feed.check(self.new, self.old)))
+        for bad in (-1, 2.5, None, "3", True):
             p["leadsWeek"] = bad
             self.assertTrue(any(f.startswith("15.") for f in check_feed.check(self.new, self.old)), bad)
+
+    def test_daily_counts_are_no_longer_kept(self):
+        self.new["properties"][0]["history"][-1]["newCards"] = 2
+        self.assertTrue(any(f.startswith("15.") and "newCards" in f for f in check_feed.check(self.new, self.old)))
 
     def test_funnel_since_when_present(self):
         p = self.new["properties"][0]
@@ -206,8 +183,7 @@ class NewFields(unittest.TestCase):
         notes = check_feed.gaps(self.new)
         self.assertTrue(any("leadsWeek" in n for n in notes))
         self.assertTrue(any("funnel.since" in n for n in notes))
-        self.assertFalse(any("items.income" in n for n in notes))  # on hold: not even noted
-        self.new["properties"][0]["history"][-1]["newCards"] = 1
+        self.assertFalse(any("items.income" in n for n in notes))
         self.new["properties"][0]["leadsWeek"] = 1
         self.assertFalse(any("grove: leadsWeek" in n for n in check_feed.gaps(self.new)))
 
