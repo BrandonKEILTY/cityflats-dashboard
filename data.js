@@ -1952,7 +1952,7 @@ window.CLIENT_FEED = {
    ],
    "prospects": [
     {
-     "name": "[name removed]",
+     "name": "Person 46",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -1965,7 +1965,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 24",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -1978,7 +1978,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 9",
      "unit": "211",
      "status": "Application: Started",
      "agent": "Cassandra Mercier",
@@ -1991,7 +1991,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 15",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -2004,7 +2004,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 32",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -2017,7 +2017,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 42",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -2030,7 +2030,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 17",
      "unit": "",
      "status": "Guest Card: Completed",
      "agent": "Cassandra Mercier",
@@ -2043,7 +2043,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 39",
      "unit": "101",
      "status": "Lease: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2056,7 +2056,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 13",
      "unit": "203",
      "status": "Lease: Started",
      "agent": "Bryan Neil Bulabos",
@@ -2069,7 +2069,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 4",
      "unit": "411",
      "status": "Application: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2082,7 +2082,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 35",
      "unit": "214",
      "status": "Lease: Partially Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2095,7 +2095,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 40",
      "unit": "209",
      "status": "Application: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2108,7 +2108,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 3",
      "unit": "204",
      "status": "Lease: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2121,7 +2121,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 37",
      "unit": "404",
      "status": "Lease: Partially Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2134,7 +2134,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 21",
      "unit": "504",
      "status": "Lease: Started",
      "agent": "Bryan Neil Bulabos",
@@ -2147,7 +2147,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 10",
      "unit": "311",
      "status": "Lease: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2165,7 +2165,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 57",
      "unit": "105",
      "status": "Lease: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -2178,7 +2178,7 @@ window.CLIENT_FEED = {
      ]
     },
     {
-     "name": "[name removed]",
+     "name": "Person 53",
      "unit": "502",
      "status": "Lease: Completed",
      "agent": "Bryan Neil Bulabos",
@@ -3017,7 +3017,7 @@ window.CLIENT_FEED = {
       7
      ]
     ],
-    "note": "No leases expire in the next four months. [name removed] (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28 and seven 2027-08-28."
+    "note": "No leases expire in the next four months. Person 6 (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28 and seven 2027-08-28."
    },
    "arrears": {
     "source": "Resident Aged Receivables, Oct 2026",
@@ -3028,7 +3028,7 @@ window.CLIENT_FEED = {
     "detail": [
      [
       "103",
-      "[name removed]",
+      "Person 11",
       "Current resident, October rent",
       1500,
       0,
@@ -3039,7 +3039,7 @@ window.CLIENT_FEED = {
      ],
      [
       "201",
-      "[name removed]",
+      "Person 1",
       "Current resident, October rent",
       4755,
       0,
@@ -3050,7 +3050,7 @@ window.CLIENT_FEED = {
      ],
      [
       "302",
-      "[name removed]",
+      "Person 6",
       "Current resident (renewed), October rent",
       4295,
       0,
@@ -3061,7 +3061,7 @@ window.CLIENT_FEED = {
      ],
      [
       "Parking",
-      "[name removed]",
+      "Person 33",
       "Current resident, October parking",
       150,
       0,
@@ -3072,7 +3072,7 @@ window.CLIENT_FEED = {
      ],
      [
       "304",
-      "[name removed]",
+      "Person 63",
       "Former resident, with collections",
       0,
       0,
@@ -3083,7 +3083,7 @@ window.CLIENT_FEED = {
      ],
      [
       "403",
-      "[name removed]",
+      "Person 8",
       "Former resident, eviction file, with collections",
       0,
       0,
@@ -4064,7 +4064,7 @@ window.CLIENT_FEED = {
    ],
    "prospects": [
     {
-     "name": "[name removed]",
+     "name": "Person 45",
      "unit": "301C",
      "status": "Application: Completed",
      "agent": "Moira Duldulao",
