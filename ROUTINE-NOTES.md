@@ -12,4 +12,5 @@ The run steps are in `ROUTINE.md`. This file keeps the facts it relies on.
 - Availability has no bedrooms column; `planBeds` is supplied by Brandon. `inventory.plans`, `inventory.askingAvg` and `weeklyChecklist` are carried forward unchanged.
 - Notice of Rent Increase is not used by this feed.
 - Test data with resident names lives in `fixtures/` and `work/` (both git-ignored). Do not commit it.
-- The old 6:00 app task also writes `dash/feed`; the routine's later save wins. Brandon turns the old task off after three clean routine runs that use the parsers.
+- The routine is "Cityflats Dashboard, daily update" at 6:07 a.m. in the KEILTY environment (`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` set, network access Full).
+- The old 6:00 a.m. desktop task also writes `dash/feed` and stays on as a backup; the routine's later save wins. Brandon turns it off after three clean mornings on the routine (all six summary lines passed).
