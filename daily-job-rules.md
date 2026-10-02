@@ -16,7 +16,7 @@ Update the Cityflats Dashboard for Brandon Ackerman (KEILTY Realty Management In
   - Vendor names are written exactly as Entrata reports them.
   - Open work orders only; completed orders are dropped.
   - `holds` on the history snapshot = `counts.applications`.
-  - Closed months for the income statements: the period on the Budget vs Actual header and earlier.
+  - Financials: only the post month the income statements report, read from the Budget vs Actual header; never a partial current month. Unchanged month: keep. Changed closed month: update it and say "restated" in `budget.note` and the summary.
   - Amounts are as the export shows them; do not adjust for what a later report would say.
   - A report missing from the package (for example Faculty47 Concessions on a day it is left out) keeps its last figures and is flagged, never filled in.
   - The first time Expiring Leases has rows, say so in the summary, because that layout has not been checked against a real report.
@@ -169,8 +169,10 @@ Examples:
 ### Income Statement Budget vs Actual and Trailing 12
 
 - Feed budget.lines, budget.noi (month actual, month budget, YTD actual, YTD budget), annualNoi, noiMonths and noiTrend.
-- Closed months only; ignore a partial current month.
-- If a closed month is re-run with different figures, update it and say so in budget.note and the summary.
+- Use only the post month the income statements report (they are set to the prior post month). Never compute or show a partial current month: the Trailing 12 sheet's current-month column is ignored.
+- If the report's month has not changed since the last run and nothing in it changed, keep the budget section exactly as it is.
+- If a closed month's figures change (the same month re-run, or an earlier month in the trend now reads differently), update them and say "restated" in budget.note and in the summary.
+- If the report's month is earlier than the feed's, keep the feed's figures and flag it for the summary.
 
 ### Work Order Details
 

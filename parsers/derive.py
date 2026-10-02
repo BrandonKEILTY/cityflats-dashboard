@@ -150,13 +150,47 @@ def budget(bva, t12):
     g = {x["name"]: x for x in bva["groups"]}
     noi = g["Net Operating Income"]
     row = next(r for r in t12["rows"] if r["name"] == "Net Operating Income")
-    last = period_month(bva)  # closed months only: the statement's own period and earlier
+    last = period_month(bva)  # only the post month the statements report and earlier; never a partial current month
     series = [(m, row["by_month"][m]) for m in sorted(t12["months"]) if m <= last]
     while series and series[0][1] == 0:  # leading months before the property had activity
         series.pop(0)
     return {"noi": [noi["actual"], noi["budget"], noi["ytd_actual"], noi["ytd_budget"]], "annualNoi": noi["annual_budget"],
             "period": last, "noiMonths": [m for m, _ in series], "noiTrend": [v for _, v in series],
             "lines": budget_lines(bva)[0], "unknownHeadings": budget_lines(bva)[1]}
+
+
+def month_of_label(label):
+    """'Sep 2026' (or 'Sep 2026, run 2026-10-01') -> '2026-09'; None when it does not start with a month."""
+    m = re.match(r"^([A-Z][a-z]{2}) (\d{4})", (label or "").strip())
+    return f"{m.group(2)}-{MONTHS[m.group(1)]:02d}" if m and m.group(1) in MONTHS else None
+
+
+def budget_status(new, old):
+    """How today's income statements compare with the budget section already in the feed.
+    Only the post month the statements report is used (never a partial current month).
+      keep      - same post month and nothing changed: leave the section exactly as it is
+      restated  - closed months whose figures changed since the last run (update them and say "restated")
+      behind    - the report's month is earlier than the feed's: keep the feed's figures and flag it"""
+    old = old or {}
+    prev = month_of_label(old.get("period"))
+    out = {"period": new["period"], "previousPeriod": prev, "periodChanged": prev != new["period"], "restated": [], "behind": False}
+    if prev and new["period"] < prev:
+        out.update(behind=True, keep=True)
+        return out
+    changed = set()
+    for m, v in zip(old.get("noiMonths", []), old.get("noiTrend", [])):
+        if m in new["noiMonths"] and abs(new["noiTrend"][new["noiMonths"].index(m)] - v) > 0.01:
+            changed.add(m)
+    if prev == new["period"]:
+        same = len(old.get("noi", [])) == len(new["noi"]) and all(abs(a - b) <= 0.01 for a, b in zip(old["noi"], new["noi"]))
+        old_lines = {l[0]: l[1:] for l in old.get("lines", [])}
+        new_lines = {l[0]: l[1:] for l in new["lines"]}
+        if not same or old.get("annualNoi") is None or abs(old["annualNoi"] - new["annualNoi"]) > 0.01 or old_lines.keys() != new_lines.keys() or \
+                any(abs(a - b) > 0.01 for k in new_lines for a, b in zip(old_lines[k], new_lines[k])):
+            changed.add(new["period"])
+    out["restated"] = sorted(changed)
+    out["keep"] = prev == new["period"] and not changed
+    return out
 
 
 # Budget vs Actual heading -> plain label shown to the owner. Headings that are subtotals are ignored.

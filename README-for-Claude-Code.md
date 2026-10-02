@@ -140,7 +140,7 @@ python -m unittest discover -s tests -v
 | `arrears` | `{source, owing, due, dueLabel, former, formerCount, detail, note}` | Resident Aged Receivables |
 | `rent` | Rent in place, averages, loss to lease, committed, full budget | Rent Roll + Availability |
 | `concessions` | `{source, units: [{unit, plan, term, total}], total, note}` | Concessions |
-| `budget` | `{source, period, lines, noi, annualNoi, noiMonths, noiTrend, note}`. Closed months are the period on the Budget vs Actual header and earlier. | Income Statement Budget vs Actual + Trailing 12 |
+| `budget` | `{source, period, lines, noi, annualNoi, noiMonths, noiTrend, note}`. Only the post month the statements report (the Budget vs Actual header), never a partial current month. Same month and nothing changed: keep the section. A closed month whose figures changed: update it and write "restated" in `note`. | Income Statement Budget vs Actual + Trailing 12 |
 | `workOrders` | `{ref, unit, problem, status, created, due, age, vendor, notes}`. Open orders only (completed are dropped). Vendor exactly as Entrata reports it. | Work Order Details, current and prior year |
 | `history` | `{date, leads, apps, leased, inProgress, holds, available, parking, wo, owing, tours}`; `holds` = `counts.applications`. Built by `parsers.figures` (`snapshot`). | Built by the run |
 | `waiting` / `working` | Open items | Command Center |

@@ -13,7 +13,7 @@ from . import activity_log, derive, registry
 MODES = {"grove": "leaseup", "f47": "stabilised"}
 
 
-def build(folder, prop_id, data_through, property_name=None):
+def build(folder, prop_id, data_through, property_name=None, previous_feed=None):
     r = registry.load(folder, prop_id, property_name)
     mode = MODES[prop_id]
     out = {"id": prop_id, "dataThrough": data_through, "missing": r["missing"], "unreadable": r["unreadable"], "warnings": r["warnings"]}
@@ -37,6 +37,9 @@ def build(folder, prop_id, data_through, property_name=None):
         out["items"] = derive.parking(r["Rentable Items Availability"])
     if r["Income Statement - Budget vs Actual"] and r["Income Statement - Trailing 12"]:
         out["budget"] = derive.budget(r["Income Statement - Budget vs Actual"], r["Income Statement - Trailing 12"])
+        if previous_feed:
+            prev = next((p for p in previous_feed["properties"] if p["id"] == prop_id), {})
+            out["budgetStatus"] = derive.budget_status(out["budget"], prev.get("budget"))
     if r["Work Order Details"]:
         out["workOrders"] = derive.open_work_orders(r["Work Order Details"])
     if al is not None:
@@ -50,8 +53,10 @@ def main():
     ap.add_argument("folder")
     ap.add_argument("prop", choices=sorted(MODES))
     ap.add_argument("--data-through", required=True)
+    ap.add_argument("--previous", help="the feed already saved (previous.json); adds budgetStatus: keep, restated, behind")
     a = ap.parse_args()
-    print(json.dumps(build(a.folder, a.prop, a.data_through), indent=1, default=str))
+    prev = json.load(open(a.previous)) if a.previous else None
+    print(json.dumps(build(a.folder, a.prop, a.data_through, previous_feed=prev), indent=1, default=str))
 
 
 if __name__ == "__main__":
