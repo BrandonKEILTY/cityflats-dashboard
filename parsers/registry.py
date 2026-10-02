@@ -39,4 +39,14 @@ def load(folder):
         out["Work Order Details"] = None
         missing.append("Work Order Details")
     out["missing"] = missing
+    warnings = []
+    ex = out.get("Expiring Leases")
+    if ex and ex["rows"]:
+        warnings.append("Expiring Leases has rows for the first time: its row layout is untested, so check the rows against the PDF and say so in the summary")
+    for name, rep in out.items():
+        if isinstance(rep, dict) and name == "Work Order Details":
+            for o in rep["orders"]:
+                if o["needs_review"]:
+                    warnings.append(f"work order {o['ref']}: could not read {', '.join(o['needs_review'])}")
+    out["warnings"] = warnings
     return out

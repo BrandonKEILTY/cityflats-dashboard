@@ -6,6 +6,22 @@ This is the exact instruction set the current 6:00 a.m. Claude app task follows.
 
 Update the Cityflats Dashboard for Brandon Ackerman (KEILTY Realty Management Inc.). This runs automatically every morning at 6:00; Brandon can also start it by hand. Dates are always YYYY-MM-DD. Canadian spelling, no em dashes. The goal is that every figure comes from Entrata. Only three things come from the team on the Command Center: client items (awaiting your input), what we are working on (open KEILTY items), and tours booked ahead (the Command Center's "Tours booked" section).
 
+## HOW THE FIGURES ARE READ (added 2026-10-03)
+
+- **Every figure comes from the parsers** in `parsers/` (see "How to run the parsers" in README-for-Claude-Code.md). Do not read figures off the PDFs by eye. Your own judgement is for client wording and the Command Center items only.
+- Where the older text below says "read" or "write" a figure, it means: take it from `python -m parsers.figures`. The rules below still define what each figure means.
+- **Rulings that apply to the parsers:**
+  - `deals`: Grove lists only leases in progress; Faculty47 lists every future resident (leased or in progress).
+  - `inventory.units`: "available on" is the report's date for every suite.
+  - Vendor names are written exactly as Entrata reports them.
+  - Open work orders only; completed orders are dropped.
+  - `holds` on the history snapshot = `counts.applications`.
+  - Closed months for the income statements: the period on the Budget vs Actual header and earlier.
+  - Amounts are as the export shows them; do not adjust for what a later report would say.
+  - A report missing from the package (for example Faculty47 Concessions on a day it is left out) keeps its last figures and is flagged, never filled in.
+  - The first time Expiring Leases has rows, say so in the summary, because that layout has not been checked against a real report.
+- **Open problem:** the Outlook connector returns attachments as text, not PDF files. See README-for-Claude-Code.md, "Open problem: getting the PDFs into the parsers".
+
 ## THE DASHBOARD
 
 - **Where it lives:** https://claude.ai/artifact/JLRG3EwBZa3G1576ZJ8xxy (title "Cityflats Dashboard").
