@@ -53,6 +53,14 @@ class FeedChecks(unittest.TestCase):
         self.new["properties"][0]["history"][0]["leads"] += 1
         self.assertTrue(any("earlier history snapshot" in f for f in self.fails()))
 
+    def test_budget_must_stop_at_a_closed_month(self):
+        self.new["properties"][0]["budget"]["noiMonths"].append("2026-10")  # partial current month
+        self.new["properties"][0]["budget"]["noiTrend"].append(0)
+        self.assertTrue(any(f.startswith("8.") for f in self.fails()))
+        self.new = copy.deepcopy(self.old)
+        self.new["properties"][1]["budget"]["period"] = "Aug 2026"
+        self.assertTrue(any("does not match" in f for f in self.fails()))
+
     def test_banned_words_and_nan(self):
         self.new["properties"][0]["arrears"]["note"] = "Per the Rent Roll, nothing is owed."
         self.assertTrue(any(f.startswith("7.") for f in self.fails()))
