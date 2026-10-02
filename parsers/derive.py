@@ -175,7 +175,7 @@ def mtm_count(rr, today):
 
 
 def parking_income(rr):
-    """Parking rent in place per month, only if the Rent Roll carries parking charges (its Charge Code Summary lists
+    """ON HOLD: not written to the feed for now. Parking rent in place per month, only if the Rent Roll carries parking charges (its Charge Code Summary lists
     a parking charge code with an amount). None when it does not: never estimated, never worked out from stall rates."""
     codes = [c for c in rr.get("charge_codes", []) if "parking" in (c["name"] or "").lower() and c.get("scheduled") is not None]
     return round(sum(c["scheduled"] for c in codes), 2) if codes else None
@@ -314,8 +314,54 @@ def budget_lines(bva):
 
 
 def funnel(lt):
-    return {"stages": lt["stages"], "total": lt["total"], "avgTotal": lt["avg_total"],
-            "leads": lt["stages"][0][1], "apps": sum(s[1] for s in lt["stages"][1:5])}
+    out = {"stages": lt["stages"], "total": lt["total"], "avgTotal": lt["avg_total"],
+           "leads": lt["stages"][0][1], "apps": sum(s[1] for s in lt["stages"][1:5])}
+    if lt.get("since"):
+        out["since"] = lt["since"]  # read from the report each run; left out on a day it cannot be read
+    return out
+
+
+# The Activity Log type of a guest card created event. NOT SEEN IN A REAL EXPORT YET: the logs so far list Notes and
+# Tours only, so the name is assumed. Once a real one appears, check it and tighten this pattern.
+CREATION_TYPE = re.compile(r"guest\s*card.*(creat|new|add)|(lead|prospect).*(creat|new|add)", re.I)
+
+
+def new_cards(entries, carried_before=False):
+    """Guest cards created on the day of the Activity Log: distinct prospects with a creation event. None when the
+    log has no such event and nothing says the report carries it (a day with none then cannot be told from a report
+    that does not list them). carried_before: an earlier day's log did carry the event, so no event today means 0."""
+    created = {e["name"].strip().lower() for e in entries if CREATION_TYPE.search(e.get("type") or "")}
+    if created:
+        return len(created)
+    return 0 if carried_before else None
+
+
+def week_start(iso):
+    """The Thursday on or before iso: the week runs Thursday to Wednesday."""
+    from datetime import date
+    d = date(int(iso[:4]), int(iso[5:7]), int(iso[8:10]))
+    return add_days(iso, -((d.weekday() - 3) % 7))
+
+
+def week_ending(iso):
+    return add_days(week_start(iso), 6)
+
+
+def leads_week(history, data_through):
+    """Guest cards created this week, Thursday through data_through: the sum of the stored daily counts (`newCards` on
+    each history snapshot; counts only, no names). Returns (total, missing_days). total is None when no day this week has
+    a count, i.e. the report does not give guest card creation yet. A day with no snapshot, or no count, is listed as
+    missing and not guessed."""
+    start = week_start(data_through)
+    days, d = [], start
+    while d <= data_through:
+        days.append(d)
+        d = add_days(d, 1)
+    by = {s["date"]: s.get("newCards") for s in history if "date" in s}
+    have = [by[d] for d in days if by.get(d) is not None]
+    if not have:
+        return None, []
+    return sum(have), [d for d in days if by.get(d) is None]
 
 
 CLOSED = ("completed", "cancelled", "canceled", "closed")
@@ -326,7 +372,7 @@ def open_work_orders(wo):
     return [o for o in wo["orders"] if (o["status"] or "").lower() not in CLOSED]
 
 
-def snapshot(reports, date):
+def snapshot(reports, date, previous_history=()):
     """The day's history entry, dated with dataThrough. A field is None when its report is missing.
     holds = suites Availability shows as rented with no one on the Rent Roll (counts.applications)."""
     rr, av = reports.get("Rent Roll"), reports.get("Availability")
@@ -337,7 +383,9 @@ def snapshot(reports, date):
     ar = reports.get("Resident Aged Receivables")
     wo = reports.get("Work Order Details")
     from .activity_log import dedupe
-    return {
+    carried = any(s.get("newCards") is not None for s in previous_history)
+    cards = new_cards(dedupe(al["entries"]), carried) if al else None
+    snap = {
         "date": date,
         "leads": lt["leads"] if lt else None, "apps": lt["apps"] if lt else None,
         "leased": (c["leased"] + c["occupied"]) if c else None,  # Faculty47 counts occupied suites as leased; the Grove has none
@@ -348,3 +396,6 @@ def snapshot(reports, date):
         "owing": arrears(ar)["owing"] if ar else None,
         "tours": sum(1 for e in dedupe(al["entries"]) if e["type"] == "Tour") if al else None,
     }
+    if cards is not None:  # a count of guest cards created that day: counts only, no names; left out while the log does not give it
+        snap["newCards"] = cards
+    return snap
