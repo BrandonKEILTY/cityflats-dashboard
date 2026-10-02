@@ -11,6 +11,8 @@ import re
 import sys
 from collections import Counter
 
+LEGAL = re.compile(r"\b(evict\w*|LTB|N(?:4|5|6|7|8|12|13)|L[12]|tribunal|hearing|sheriff|bailiff|lawyer|paralegal|court|legal|lien)\b|\bfile\s*(?:no\.?|number|#)|\b[A-Z]{3}-\d{4,}", re.I)
+ISO = re.compile(r"^\d{4}-\d\d-\d\d$")
 BANNED = ["Rent Roll", "Activity Log", "Command Center", "package", "report total", "prepay"]
 CLIENT_KEYS = ["waiting", "working", "items", "renewals", "arrears", "rent", "concessions", "budget", "workOrders"]
 SUITES = {"grove": 82, "f47": 19}
@@ -25,6 +27,12 @@ def walk(o, path=""):
             yield from walk(v, f"{path}/{i}")
     else:
         yield path, o
+
+
+def add_months(iso, n):
+    y, m, d = int(iso[:4]), int(iso[5:7]), int(iso[8:10])
+    m0 = m - 1 + n
+    return f"{y + m0 // 12:04d}-{m0 % 12 + 1:02d}-{d:02d}"
 
 
 def check(new, old):
@@ -74,6 +82,45 @@ def check(new, old):
                 mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].index(m.group(1)) + 1
                 if f"{m.group(2)}-{mon:02d}" != b["noiMonths"][-1]:
                     fails.append(f"8. {pid}: budget period {label!r} does not match its last month {b['noiMonths'][-1]}")
+        # rent increases: a list of rows with the agreed fields; newRent stays null until the rule is confirmed
+        inc = p.get("increases")
+        if not isinstance(inc, list):
+            fails.append(f"9. {pid}: increases must be present and a list (use [] when there are none)")
+        else:
+            for r in inc:
+                if set(r) != {"num", "rent", "newRent", "earliest", "noticeBy"}:
+                    fails.append(f"9. {pid}: increases row has the wrong fields: {sorted(r)}")
+                    continue
+                if not (ISO.match(str(r["earliest"])) and ISO.match(str(r["noticeBy"]))):
+                    fails.append(f"9. {pid}: increases row {r['num']} has a date that is not YYYY-MM-DD")
+                    continue
+                from datetime import date, timedelta
+                e = date.fromisoformat(r["earliest"])
+                if date.fromisoformat(r["noticeBy"]) != e - timedelta(days=90):
+                    fails.append(f"9. {pid}: increases {r['num']}: noticeBy is not earliest minus 90 days")
+                if r["noticeBy"] > add_months(new["dataThrough"], 6):
+                    fails.append(f"9. {pid}: increases {r['num']}: notice date {r['noticeBy']} is more than 6 months out")
+                if r["newRent"] is not None:
+                    fails.append(f"9. {pid}: increases {r['num']}: newRent must stay null until the rule is confirmed")
+            keys = [(r["noticeBy"], r["num"]) for r in inc if isinstance(r, dict) and "noticeBy" in r]
+            if keys != sorted(keys):
+                fails.append(f"9. {pid}: increases are not sorted by notice date")
+        # renewals: lease ends [date, count] for the next 12 months only
+        by = (p.get("renewals") or {}).get("byEnd")
+        if by is not None:
+            lo, hi = new["dataThrough"], add_months(new["dataThrough"], 12)
+            for pair in by:
+                if not (isinstance(pair, list) and len(pair) == 2 and ISO.match(str(pair[0])) and isinstance(pair[1], int)):
+                    fails.append(f"10. {pid}: renewals.byEnd entry {pair!r} is not [date, count]")
+                elif not lo <= pair[0] <= hi:
+                    fails.append(f"10. {pid}: renewals.byEnd has {pair[0]}, outside {lo} to {hi}")
+        # arrears wording: never write legal steps or file numbers in a status, comment or note
+        for path, v in walk(p.get("arrears")):
+            if isinstance(v, str) and LEGAL.search(v):
+                fails.append(f"11. {pid}.arrears{path}: legal wording in {v[:70]!r}")
+        for r in (p.get("arrears") or {}).get("detail", []) or []:
+            if str(r[2]).lower().startswith("former") and "collections" in " ".join(map(str, r[8:])).lower() and "collections" not in str(r[2]).lower():
+                fails.append(f"11. {pid}: arrears {r[0]} {r[1]}: a former resident in collections must read 'Former resident, with collections'")
         for k in CLIENT_KEYS:
             for path, v in walk(p.get(k)):
                 if path.endswith("/source"):  # source labels are for KEILTY; the page does not show them

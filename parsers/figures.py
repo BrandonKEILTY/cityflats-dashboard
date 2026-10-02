@@ -24,7 +24,8 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None)
         out["stack"] = derive.stack(rr, av)
         out["deals"] = derive.deals(rr, mode)
         out["rent"] = derive.rent(rr, av, mode)
-        out["renewals"] = derive.renewals(rr, r["Expiring Leases"])
+        out["renewals"] = derive.renewals(rr, r["Expiring Leases"], data_through)
+        out["increases"] = derive.increases(rr, data_through)
         out["inventory"] = {"units": [[u["unit"], u["plan"], u["sqft"], u["budget_rent"], u["available_on"] or "", u["status"]] for u in av["units"]],
                             "unleasedMonthly": sum(u["budget_rent"] for u in av["units"] if u["status"] == "Vacant Unrented Ready")}
     if r["Resident Aged Receivables"]:

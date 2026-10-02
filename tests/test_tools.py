@@ -61,12 +61,65 @@ class FeedChecks(unittest.TestCase):
         self.new["properties"][1]["budget"]["period"] = "Aug 2026"
         self.assertTrue(any("does not match" in f for f in self.fails()))
 
+    def test_increases_must_be_a_list_with_the_agreed_fields(self):
+        del self.new["properties"][0]["increases"]
+        self.assertTrue(any(f.startswith("9.") and "must be present" in f for f in self.fails()))
+        self.new = copy.deepcopy(self.old)
+        row = {"num": "101", "rent": 3000, "newRent": None, "earliest": "2027-05-01", "noticeBy": "2027-01-31"}
+        self.new["properties"][1]["increases"] = [row]
+        self.assertEqual(self.fails(), [])
+        for bad, why in ((dict(row, noticeBy="2027-02-01"), "minus 90 days"), (dict(row, newRent=3100), "newRent must stay null"),
+                         (dict(row, noticeBy="2027-12-01", earliest="2028-03-01"), "more than 6 months"), ({"num": "101"}, "wrong fields")):
+            self.new["properties"][1]["increases"] = [bad]
+            self.assertTrue(any(why in f for f in self.fails()), why)
+        self.new["properties"][1]["increases"] = [dict(row, num="2"), dict(row, num="1", noticeBy="2027-01-31"), dict(row, noticeBy="2027-01-30", earliest="2027-04-30")]
+        self.assertTrue(any("not sorted" in f for f in self.fails()))
+
+    def test_by_end_stays_inside_12_months(self):
+        self.new["properties"][1]["renewals"]["byEnd"].append(["2027-12-28", 1])
+        self.assertTrue(any(f.startswith("10.") and "outside" in f for f in self.fails()))
+        self.new = copy.deepcopy(self.old)
+        self.new["properties"][1]["renewals"]["byEnd"] = [["soon", 1]]
+        self.assertTrue(any(f.startswith("10.") for f in self.fails()))
+
+    def test_no_legal_words_in_arrears(self):
+        d = self.new["properties"][1]["arrears"]["detail"]
+        for text in ("Former resident, eviction file, with collections", "Former resident, with collections, LTB hearing set",
+                     "2026-03-03: N4 served", "File no. 12345", "TNL-123456 filed"):
+            d[-1][2] = text
+            self.assertTrue(any(f.startswith("11.") for f in self.fails()), text)
+        d[-1][2] = "Former resident, with collections"
+        d[-1][8] = "2026-03-03: filed to collections, per accounting."
+        self.assertEqual(self.fails(), [])
+        d[-1][2] = "Former resident"
+        d[-1][8] = "sent to collections"
+        self.assertTrue(any("must read 'Former resident, with collections'" in f for f in self.fails()))
+
     def test_banned_words_and_nan(self):
         self.new["properties"][0]["arrears"]["note"] = "Per the Rent Roll, nothing is owed."
         self.assertTrue(any(f.startswith("7.") for f in self.fails()))
         self.new = copy.deepcopy(self.old)
         self.new["properties"][0]["rent"]["signed"] = "NaN"
         self.assertTrue(any(f.startswith("1.") for f in self.fails()))
+
+
+class RenderCheck(unittest.TestCase):
+    def test_swap_replaces_the_built_in_feed_only(self):
+        from tools import render_check
+        html = "<script>/* x */\nwindow.CLIENT_FEED = {\"a\": [1, {\"b\": \"}\"}], \"c\": 2};\n</script><p>after</p>"
+        out = render_check.swap_builtin_feed(html, {"z": 1})
+        self.assertEqual(out, "<script>/* x */\nwindow.CLIENT_FEED = {\"z\": 1};\n</script><p>after</p>")
+
+    @unittest.skipUnless(os.path.exists(os.path.join(ROOT, "index.html")) and os.path.exists(FEED), "page or feed not present")
+    def test_the_synced_page_renders_the_committed_feed(self):
+        try:
+            import playwright  # noqa: F401
+            from tools import render_check
+        except ImportError:
+            self.skipTest("playwright not installed")
+        if not render_check.chrome():
+            self.skipTest("no browser")
+        self.assertEqual(render_check.check(FEED, os.path.join(ROOT, "index.html")), [])
 
 
 class CommandCenter(unittest.TestCase):

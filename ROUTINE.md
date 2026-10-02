@@ -2,7 +2,7 @@
 
 The routine's instructions are one line: "Follow ROUTINE.md in this repository exactly; this run is unattended." Change the run by changing this file.
 
-This run is unattended. Never stop to ask a question. If something cannot be done, say so in the summary and carry on with the rest. Dates are always YYYY-MM-DD. Canadian spelling. No em dashes in anything the client sees. Never write to the Command Center.
+This run is unattended. Never stop to ask a question. If something cannot be done, say so in the summary and carry on with the rest. Dates are always YYYY-MM-DD. Canadian spelling. No em dashes in anything the client sees. Never write to the Command Center. Never publish or edit the dashboard page: `index.html` in this repository is a copy of the live page (synced when the page is republished from a chat), used only by the render check.
 
 Read `README-for-Claude-Code.md` and `daily-job-rules.md` first. They define what each figure means and the writing rules. This file says what to run, in what order.
 
@@ -58,8 +58,8 @@ For each property, replace these from its parser file, keeping the structure and
 |---|---|
 | `counts`, `stack`, `deals`, `rent` | `counts`, `stack`, `deals`, `rent`. Grove (lease-up) and Faculty47 (stabilised) get different rent keys; use what the parser gives. `counts.toursToday` is yesterday's tour count. |
 | `inventory.units`, `inventory.unleasedMonthly` | `inventory` |
-| `renewals` | `renewals`: `expiring120`, `firstEnd`, `byEnd` (Faculty47). Rows from Expiring Leases when it has any. Write `note` under the writing rules. |
-| `arrears` | `arrears`: `owing`, `due`, `former`, `formerCount`, and `detail` rows (only rows with a balance owing). Never show credits or prepayments. Write `note`. |
+| `renewals`, `increases` | `renewals`: `expiring120` (the Expiring Leases count), `firstEnd`, and `byEnd` as `[date, count]` pairs for the next 12 months only. Rows from Expiring Leases when it has any. Write `note` under the writing rules. `increases`: the list from the parser, one row per lease, `newRent` left `null`; `[]` when none. |
+| `arrears` | `arrears`: `owing`, `due`, `former`, `formerCount`, and `detail` rows (only rows with a balance owing). Never show credits or prepayments. Write each status and comment yourself: "Current resident, October rent", "Current resident (renewed), October rent", "Former resident, with collections" (or "Former resident" when not in collections). The page finds collections by that word. Never write legal steps or file numbers (no "eviction", "LTB", "N4", hearings) and do not copy Entrata's status text. Write `note`. |
 | `funnel` | `funnel`: `stages`, `total`, `avgTotal` |
 | `concessions` | `concessions`: `units`, `total`. Write `note`. |
 | `items` | `items`: `list`, `occupied`, `total`. Write `note` with the rates. |
