@@ -44,8 +44,8 @@ This folder holds live copies of `index.html`, `data.js` and `cityflats-logo.png
 3. **Read the Command Center's open items and tours booked, read only.** These come from the page's built-in `"items":` array, then `board/newitems`, then `board/edits`, using the filters in STEP 3. **Never write to the Command Center.**
 4. **Add one history snapshot**, dated yesterday.
 5. **Run the checks in section 6.** If any check fails, don't save.
-6. **Save the day's feed** to the dashboard (section 3).
-7. **Commit** the day's feed to the repository as `feeds/YYYY-MM-DD.json`, so there's a record and a way to roll back.
+6. **Save the day's feed** to R2 (`keilty-dashboards/cityflats/feed.json` and `history/<dataThrough>.json`), then render-check and deploy the page with `feed.json` to Cloudflare Pages (ROUTINE.md section 6). During the two-week overlap it also writes `dash/feed` as a backup.
+7. **No daily commits.** The dated history in R2 is the record and the way to roll back.
 8. **Email me a short summary** (STEP 5 of the rules).
 
 If no Entrata email arrived, still refresh the Command Center items, leave the Entrata figures as they were, save, and say so in the summary.
@@ -111,11 +111,11 @@ python -m unittest discover -s tests -v
 
 ### Names stay out of git
 
-The live `dash/feed` in the dashboard is the record and keeps the real names. Nothing committed may hold a resident or prospect name. The daily `feeds/YYYY-MM-DD.json` is written through `tools/anonymise_feed.py` (names become "Resident 1", "Prospect 1", same shape), `index.html` has its built-in figures removed by `tools/sync_page.py`, and `tools/check_repo_names.py` fails if a name from the Rent Roll, the arrears table or the prospects appears in any file. Test fixtures with real names live in the git-ignored `fixtures/` and `work/`.
+R2 (`keilty-dashboards/cityflats/`) is the record and keeps the real names; the deployed site is behind Cloudflare Access. Nothing committed may hold a resident or prospect name. No daily feed is committed. The one sample feed, `tests/data/feed-2026-10-02.json`, was anonymised (names became "Resident 1", "Prospect 1", same shape) before it was committed, `index.html` has its built-in figures removed by `tools/sync_page.py`, and `tools/check_repo_names.py` fails if a name from the Rent Roll, the arrears table or the prospects appears in any file. Test fixtures with real names live in the git-ignored `fixtures/` and `work/`.
 
 ### The page
 
-`index.html` in this repository is a copy of the live page (artifact JLRG3EwBZa3G1576ZJ8xxy, template `keilty-template 2026-10-02.12`), so `tools/render_check.py` tests the real page. **The routine never publishes the page.** After the page is republished from a chat, sync the copy: read the artifact's `index.html` (Artifact tool, `path: "index.html"`), then run `python tools/sync_page.py <saved file>`. **Never copy the page in by hand:** it carries a built-in copy of the figures, including resident names in the arrears table, and `sync_page.py` replaces that copy with `null` (and refuses to write if any figures are left). A test fails if `index.html` still holds the figures. The page keeps a built-in copy of the feed and replaces it from `dash/feed` when it runs in Claude; `render_check.py` tests both paths.
+`index.html` in this repository is a copy of the live page (artifact JLRG3EwBZa3G1576ZJ8xxy, template `keilty-template 2026-10-02.14`), so `tools/render_check.py` tests the real page. It is also the template the routine deploys to Cloudflare Pages: `tools/build_site.py` writes today's figures into a copy under `work/` and puts `feed.json` beside it, and `render_check.py --site` checks those exact files. **The routine never changes the page's code or republishes the artifact.** After the page is republished from a chat, sync the copy: read the artifact's `index.html` (Artifact tool, `path: "index.html"`), then run `python tools/sync_page.py <saved file>`. **Never copy the page in by hand:** it carries a built-in copy of the figures, including resident names in the arrears table, and `sync_page.py` replaces that copy with `null` (and refuses to write if any figures are left). A test fails if `index.html` still holds the figures. The page keeps a built-in copy of the feed and replaces it from `dash/feed` when it runs in Claude; `render_check.py` tests both paths.
 
 ### New leads, funnel start and the fields the reports may not carry
 

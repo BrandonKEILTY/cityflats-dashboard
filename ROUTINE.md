@@ -2,7 +2,7 @@
 
 The routine's instructions are one line: "Follow ROUTINE.md in this repository exactly; this run is unattended." Change the run by changing this file.
 
-This run is unattended. Never stop to ask a question. If something cannot be done, say so in the summary and carry on with the rest. Dates are always YYYY-MM-DD. Canadian spelling. No em dashes in anything the client sees. Never write to the Command Center. Never publish or edit the dashboard page: `index.html` in this repository is a copy of the live page (synced when the page is republished from a chat), used only by the render check.
+This run is unattended. Never stop to ask a question. If something cannot be done, say so in the summary and carry on with the rest. Dates are always YYYY-MM-DD. Canadian spelling. No em dashes in anything the client sees. Never write to the Command Center. Never change how the dashboard looks: `index.html` in this repository is the page template (template 2026-10-02.14 on, synced from the live page, built-in figures removed). The run writes figures only: it saves them to R2 and deploys that template with today's figures to Cloudflare Pages (section 6). Never republish the Claude artifact.
 
 Read `README-for-Claude-Code.md` and `daily-job-rules.md` first. They define what each figure means and the writing rules. This file says what to run, in what order.
 
@@ -10,6 +10,7 @@ Read `README-for-Claude-Code.md` and `daily-job-rules.md` first. They define wha
 
 1. `pip install -r requirements.txt` (pdfplumber for the layout tests, playwright for the render check). The browser is already installed; never run `playwright install`.
 2. Today is the run date. `dataThrough` is yesterday. Work in `work/YYYY-MM-DD/` (git-ignored; it holds resident names).
+3. Cloudflare: the environment carries `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Run wrangler as `npx -y wrangler@4` with `CI=1` set, so it never prompts. Every R2 command takes `--remote`. Bucket `keilty-dashboards`, folder `cityflats/`; Pages project `cityflats-dashboard`, branch `main`.
 
 ## 1. Get today's Entrata Excel files
 
@@ -26,7 +27,7 @@ python -m parsers.figures work/YYYY-MM-DD grove --data-through YYYY-MM-DD --prev
 python -m parsers.figures work/YYYY-MM-DD f47   --data-through YYYY-MM-DD --previous work/YYYY-MM-DD/previous.json > work/YYYY-MM-DD/f47.json
 ```
 
-`previous.json` is the feed read in section 4, step 1, so read the current `dash/feed` before running these. Every number comes from these two files. Do not read figures off the spreadsheets by eye, and do not type a figure from memory.
+`previous.json` is yesterday's feed read from R2 in section 4, so read it before running these. Every number comes from these two files. Do not read figures off the spreadsheets by eye, and do not type a figure from memory.
 
 Each file lists:
 - `missing`: reports with no sheet for the property. Handle as in section 1, step 4.
@@ -51,7 +52,15 @@ Rulings built into the parsers are in `daily-job-rules.md` ("How the figures are
 
 ## 4. Build the feed
 
-Start from the current `dash/feed`: `ArtifactData get` on https://claude.ai/artifact/JLRG3EwBZa3G1576ZJ8xxy, collection `dash`, document `feed`. Keep its `version`. Parse its `json` field. Save a copy as `work/YYYY-MM-DD/previous.json`.
+Start from yesterday's feed in R2, which is the record:
+
+```
+npx -y wrangler@4 r2 object get keilty-dashboards/cityflats/feed.json --file work/YYYY-MM-DD/r2-previous.json --remote
+```
+
+It is the `{asAt, dataThrough, generated, json}` wrapper. Parse its `json` field and save the feed as `work/YYYY-MM-DD/previous.json`.
+
+During the two-week overlap (until Brandon retires the Claude artifact), also `ArtifactData get` the current `dash/feed` on https://claude.ai/artifact/JLRG3EwBZa3G1576ZJ8xxy, collection `dash`, document `feed`, and keep its `version` for the backup write in section 6. If its `generated` differs from the R2 copy's, say so in the summary; R2 wins. If the R2 read fails, build from `dash/feed` instead, say so in the summary and send a notification.
 
 Top level: `asAt` = today, `dataThrough` = yesterday, `generated` = a new timestamp (the page redraws when it changes), `rentRollAsOf` = the rent roll's data-as-of date.
 
@@ -92,14 +101,30 @@ python tools/check_feed.py work/YYYY-MM-DD/feed.json work/YYYY-MM-DD/previous.js
 python tools/render_check.py work/YYYY-MM-DD/feed.json
 ```
 
+A report or summary must never quote the feed's `json` text: it holds resident names.
+
 These are the checks in README section 6. If either fails, **stop, change nothing, and say why**: push a notification with the first failures. This is the only reason to stop. A single unreadable report is not a stop (section 2).
 
-## 6. Save
+## 6. Save to R2, then deploy
 
-1. `ArtifactData set` on the dashboard URL, collection `dash`, document `feed`, with `if_version` = the version read in section 4. Data: `json` (the whole feed as JSON text), `asAt`, `dataThrough`, `generated`. Use `file_path` to send it. Do not republish the page.
-2. If the write is refused for a version change, re-read, rebuild from the new version and write again.
-3. If the write needs approval or fails for any other reason, do not work around it: push a notification.
-4. **Names stay out of git.** The live `dash/feed` keeps the real names and is the record. For the repository copy, run `python tools/anonymise_feed.py work/YYYY-MM-DD/feed.json feeds/YYYY-MM-DD.json --figures work/YYYY-MM-DD/grove.json --figures work/YYYY-MM-DD/f47.json` (resident and prospect names become "Resident 1", "Prospect 1"), then `python tools/check_repo_names.py --feed work/YYYY-MM-DD/feed.json --figures work/YYYY-MM-DD/grove.json --figures work/YYYY-MM-DD/f47.json` and do not commit if it fails. Then commit only `feeds/YYYY-MM-DD.json` with a short message. Push it **straight to `main`**: `git pull --rebase origin main`, then `git push origin HEAD:main`. No branch and no pull request. If the push is refused, say so in the summary and send a notification; do not push anywhere else.
+The order matters. Save first; deploy only after the save is confirmed.
+
+1. **Wrap the feed.** `python -m tools.build_site work/YYYY-MM-DD/feed.json work/YYYY-MM-DD/site` writes the exact files to deploy: `site/index.html` (this repository's template with today's figures built in, so the page never opens blank), `site/feed.json` (the `{asAt, dataThrough, generated, json}` wrapper the page reads first) and `site/_headers`. `site/feed.json` is also what goes to R2.
+2. **Save to R2:**
+   ```
+   npx -y wrangler@4 r2 object put keilty-dashboards/cityflats/feed.json --file work/YYYY-MM-DD/site/feed.json --content-type application/json --remote
+   npx -y wrangler@4 r2 object put keilty-dashboards/cityflats/history/<dataThrough>.json --file work/YYYY-MM-DD/site/feed.json --content-type application/json --remote
+   ```
+   Then read `cityflats/feed.json` back (`r2 object get ... --file work/YYYY-MM-DD/r2-check.json --remote`) and `cmp` it with `site/feed.json`. If either write or the read-back fails or differs, retry once. If it still fails, **do not deploy**: skip steps 4 and 5, still do step 6, and send a notification saying the figures were not saved and the page was not updated. Never overwrite an earlier day's history file except the one for today's `dataThrough`.
+3. **Render check the exact files:** `python tools/render_check.py --site work/YYYY-MM-DD/site`. It serves the folder as Pages would, opens every view, and fails if the page shows NaN or undefined, has a script error, does not redraw from `feed.json`, or carries figures that differ from `feed.json`. If it fails, do not deploy (the R2 save stands); say why in the summary and send a notification.
+4. **Deploy:**
+   ```
+   npx -y wrangler@4 pages deploy work/YYYY-MM-DD/site --project-name cityflats-dashboard --branch main --commit-dirty=true --commit-message "Cityflats figures <dataThrough>"
+   ```
+   Deploy only the `site` folder, nothing else. If the deploy fails, retry once. If it still fails, keep the R2 save (never undo it), say in the summary that the figures are saved in R2 but the page still shows the previous day, and send a notification. The next run deploys as normal.
+5. **Check the gate.** `curl -sS -o /dev/null -w "%{http_code} %{redirect_url}" https://cityflats-dashboard.pages.dev/feed.json` must be a 302 to `cloudflareaccess.com`. If it returns the file, send a notification at once: the figures are open to anyone.
+6. **Backup write during the two-week overlap.** `ArtifactData set` on the dashboard URL, collection `dash`, document `feed`, with `if_version` = the version read in section 4, `file_path` = `work/YYYY-MM-DD/site/feed.json`. Do not republish the artifact. If the write is refused for a version change, re-read and write again; if it needs approval or fails for any other reason, say so in the summary (R2 and the site are the record). Do this even when step 2 failed. Brandon drops this step when the artifact is retired.
+7. **No GitHub commits.** Daily figures live in R2 only. Do not commit, push or open a pull request.
 
 ## 7. Summary and notification
 
@@ -110,6 +135,8 @@ Finish with a short summary:
 - rent increases: only on a morning the list changes, the suites added or dropped plus `increasesBasis`; always any `leaseStartToConfirm` suites ("lease start to confirm")
 - anything worth checking in Entrata (a future resident whose move-in date has passed, reports that disagree, totals that do not add up)
 
-Push a notification (PushNotification, message inside `<routine_summary>` tags) when: the run could not save or could not push the feed file to `main`, a check failed, no Excel arrived, any report is missing or unreadable, a `warnings` entry appears for the first time, or something in Entrata needs Brandon. Lead with the one thing that matters. A clean run sends no notification.
+Push a notification (PushNotification, message inside `<routine_summary>` tags) when: the R2 save failed, the render check on the site failed, the deploy failed, the gate let `feed.json` through, a check failed, no Excel arrived, any report is missing or unreadable, a `warnings` entry appears for the first time, or something in Entrata needs Brandon. Lead with the one thing that matters. A clean run sends no notification.
 
-After the first save that uses the parsers, and on any run that changed how the feed is built, tell Brandon that a parser-built `dash/feed` is saved so he can render-check it against the published page.
+After the first save that uses the parsers, and on any run that changed how the feed is built, tell Brandon that a parser-built feed is saved and deployed so he can check https://cityflats-dashboard.pages.dev against the Claude artifact.
+
+The summary always opens with three lines, each passed or failed: **R2 save** (with the history file name and that the read-back matched), **deploy** (with the deployment address wrangler printed), **gate check** (the status and where `feed.json` redirected). Then whether the `dash/feed` backup write went through.
