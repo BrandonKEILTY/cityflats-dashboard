@@ -5,6 +5,7 @@ Input is the text the Outlook connector returns for an Excel (.xlsx) attachment,
 ```
 python -m parsers.figures work/2026-10-02 grove --data-through 2026-10-01
 python -m unittest discover -s tests -v
+python tools/render_check.py feeds/2026-10-02.json     # renders index.html (a copy of the live page) with a feed, both paths
 python -m parsers.diff_report > DIFFERENCES.md      # needs the PDF fixtures; see below
 ```
 
