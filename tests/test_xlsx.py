@@ -203,6 +203,48 @@ class RenewalsAndIncreases(unittest.TestCase):
         self.assertEqual(derive.renewals(rr, None, "2026-10-01")["byEnd"], [])
 
 
+class NewFieldsForTemplate12(unittest.TestCase):
+    def test_month_to_month_counts_occupied_leases_with_no_end_or_a_past_end(self):
+        import copy
+        rr = load("f47", STABLE)["Rent Roll"]
+        self.assertEqual(derive.mtm_count(rr, "2026-10-02"), 0)  # both leases end in 2027
+        rr2 = copy.deepcopy(rr)
+        rr2["suites"][0]["lease_end"] = "2026-09-28"  # ended and still living there
+        rr2["suites"][1]["lease_end"] = None  # no end date
+        self.assertEqual(derive.mtm_count(rr2, "2026-10-02"), 2)
+        self.assertEqual(derive.mtm_count(rr2, "2026-09-27"), 1)  # not yet ended on 2026-09-27
+        rr2["suites"][2]["lease_end"] = None  # a vacant suite is never month to month
+        self.assertEqual(derive.mtm_count(rr2, "2026-10-02"), 2)
+
+    def test_lease_up_building_has_no_month_to_month(self):
+        self.assertEqual(derive.mtm_count(load("grove", LEASEUP)["Rent Roll"], "2026-10-02"), 0)
+
+    def test_rent_roll_charge_codes_and_parking_income(self):
+        rr = load("f47", STABLE)["Rent Roll"]
+        names = [c["name"] for c in rr["charge_codes"]]
+        self.assertEqual(names, ["Ledger: Resident", "Delta Rent", "Parking, Residents"])
+        self.assertEqual(derive.parking_income(rr), 400)
+        self.assertEqual(figures.build(DATA, "f47", "2026-09-30", property_name=STABLE).get("items"), None)  # no Rentable Items sheet here
+        self.assertIsNone(derive.parking_income(load("grove", LEASEUP)["Rent Roll"]))  # no charge codes at all
+
+    def test_parking_income_is_never_estimated(self):
+        self.assertIsNone(derive.parking_income({"charge_codes": [{"name": "Delta Rent", "scheduled": 170, "type": "Rent"}]}))
+        self.assertIsNone(derive.parking_income({"charge_codes": [{"name": "Parking", "scheduled": None, "type": ""}]}))
+        self.assertIsNone(derive.parking_income({}))
+        self.assertEqual(derive.parking_income({"charge_codes": [{"name": "Parking, Residents", "scheduled": 80, "type": "Rent"},
+                                                                 {"name": "Parking, Visitors", "scheduled": 20.5, "type": "Rent"}]}), 100.5)
+
+    def test_figures_write_mtm_and_name_the_fields_the_reports_do_not_carry(self):
+        f = figures.build(DATA, "f47", "2026-09-30", property_name=STABLE, as_at="2026-10-01")
+        self.assertEqual(f["renewals"]["mtm"], 0)
+        gaps = " ".join(f["notCarried"])
+        self.assertIn("leadsWeek", gaps)
+        self.assertIn("funnel.since", gaps)
+        self.assertNotIn("items.income", gaps)  # this Rent Roll does carry a parking code
+        self.assertNotIn("leadsWeek", f)
+        self.assertNotIn("since", f.get("funnel", {}))
+
+
 class FinancialMonth(unittest.TestCase):
     """Only the post month the statements report is used; unchanged months are kept; changed closed months are restated."""
 
@@ -402,6 +444,12 @@ class RealWorkbooks(unittest.TestCase):
         self.assertEqual(b["noi"][0], 29435.14)
         self.assertEqual(b["unknownHeadings"], [])
         self.assertEqual(len(b["lines"]), 13)
+
+    def test_real_rent_rolls_carry_no_parking_charges(self):
+        for pid in ("grove", "f47"):
+            r = registry.load(os.path.join(ROOT, "fixtures", "xlsx_text"), pid)
+            self.assertIsNone(derive.parking_income(r["Rent Roll"]), pid)
+            self.assertEqual(derive.mtm_count(r["Rent Roll"], "2026-10-02"), 0, pid)
 
 
 if __name__ == "__main__":
