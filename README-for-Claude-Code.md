@@ -22,7 +22,7 @@ The Command Center's daily results land in its artifact database (collection `bo
 | | |
 |---|---|
 | Dashboard | **Cityflats Dashboard**, https://claude.ai/artifact/JLRG3EwBZa3G1576ZJ8xxy |
-| Published files today | `index.html` (the page), `data.js` (every figure), `cityflats-logo.png` |
+| Published files today | `index.html` only (the logo is inline and the page carries a built-in copy of the feed; live figures come from `dash/feed`). `data.js` and `cityflats-logo.png` in this repo are old copies and are no longer used. |
 | Current updater | A Claude app scheduled task, "City Flats Dashboard, daily update", 6:00 a.m. daily. It needs my computer on. The full rules are in `daily-job-rules.md`. |
 | Command Center (data source and model) | https://claude.ai/artifact/ErKdkkfCb4PMfw4uwSchLW |
 | Client | Centennial Land Development LP and Faculty 47 Development LP |
@@ -109,6 +109,10 @@ python -m unittest discover -s tests -v
 - `missing` lists reports with no sheet for the property: keep the last figures and raise a `missing` flag. `unreadable` lists sheets a parser could not read: keep the last figures, raise a `fix` flag, **carry on with the other reports**. `warnings` are passed on in the summary.
 - Only a failed whole-feed check (section 6) stops the run.
 
+### The page
+
+`index.html` in this repository is a copy of the live page (artifact JLRG3EwBZa3G1576ZJ8xxy, template `keilty-template 2026-10-02.8`), so `tools/render_check.py` tests the real page. **The routine never publishes the page.** After the page is republished from a chat, sync the copy: read the artifact's `index.html` (Artifact tool, `path: "index.html"`) and commit it as `index.html`. The page keeps a built-in copy of the feed and replaces it from `dash/feed` when it runs in Claude; `render_check.py` tests both paths.
+
 ### Fixed rules for the fields the parsers build
 
 - **Grove `rent`:** `signed` = rent on the leased suites; `signedCount` = how many; `signedBudget` = Availability's budgeted rent for the same suites; `lossToLease` = `signedBudget` minus `signed` (0 shows as "On budget"); `avgSuite` = `signed` / `signedCount`; `avgSqft` = `signed` / those suites' square feet; `committed` = `signed` plus the rent on leases in progress; `fullBudget` = budgeted rent for all 81 rentable suites.
@@ -136,8 +140,9 @@ python -m unittest discover -s tests -v
 | `funnel` | `{source, stages, total, avgTotal}` | Lease Term Progress Summary |
 | `prospects` | `{name, unit, status, agent, entries}`; entries newest first and never removed | Activity Log, Leasing |
 | `items` | Parking `{source, list, occupied, total, note}` | Rentable Items Availability |
-| `renewals` | `{source, expiring120, firstEnd, byEnd, rows, note}` | Expiring Leases + Rent Roll |
-| `arrears` | `{source, owing, due, dueLabel, former, formerCount, detail, note}` | Resident Aged Receivables |
+| `renewals` | `{source, expiring120, firstEnd, byEnd, rows, note}`. `byEnd` is `[date, count]` pairs from the Rent Roll lease ends (current and future residents), inside 12 months of `dataThrough` only. `firstEnd` is the earliest lease end overall. `expiring120` is the Expiring Leases count. | Expiring Leases + Rent Roll |
+| `increases` | List of `{num, rent, newRent, earliest, noticeBy}`, one row per lease. `earliest` = 12 months after the rent last changed (the Rent Roll lease start); `noticeBy` = `earliest` minus 90 days. Only rows whose `noticeBy` falls by `dataThrough` plus 6 months (notices already due included); `[]` if none. `newRent` stays `null` until Brandon confirms the rule. | Rent Roll |
+| `arrears` | `{source, owing, due, dueLabel, former, formerCount, detail, note}`. The page finds former residents in collections by the word "collections" in the status, so write "Former resident, with collections". Never write legal steps in any status, comment or note: no "eviction", "LTB", "N4", hearings or file numbers, and do not copy Entrata's status text (for example "Past - Eviction"). | Resident Aged Receivables |
 | `rent` | Rent in place, averages, loss to lease, committed, full budget | Rent Roll + Availability |
 | `concessions` | `{source, units: [{unit, plan, term, total}], total, note}` | Concessions |
 | `budget` | `{source, period, lines, noi, annualNoi, noiMonths, noiTrend, note}`. Only the post month the statements report (the Budget vs Actual header), never a partial current month. Same month and nothing changed: keep the section. A closed month whose figures changed: update it and write "restated" in `note`. | Income Statement Budget vs Actual + Trailing 12 |

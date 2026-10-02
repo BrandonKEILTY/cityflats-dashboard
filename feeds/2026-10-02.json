@@ -1,6 +1,6 @@
 {
  "asAt": "2026-10-02",
- "generated": "2026-10-02 retest",
+ "generated": "2026-10-02 17:45",
  "client": "Centennial Land Development LP and Faculty 47 Development LP",
  "short": "Cityflats portfolio",
  "properties": [
@@ -1368,7 +1368,13 @@
     "source": "Expiring Leases",
     "expiring120": 0,
     "firstEnd": "2027-07-19",
-    "note": "No leases expire in the next four months. All leases start in 2027; the first ends 2027-07-19."
+    "note": "No leases expire in the next four months. All leases start in 2027; the first ends 2027-07-19.",
+    "byEnd": [
+     [
+      "2027-07-19",
+      1
+     ]
+    ]
    },
    "arrears": {
     "source": "Resident Aged Receivables",
@@ -2625,7 +2631,8 @@
     "total": 86,
     "note": "Surface stalls are $80 a month and covered stalls $120. The 11 reserved stalls belong to future residents and start when their leases do. Six visitor stalls (P112 to P117) are counted in the 86."
    },
-   "toCapture": []
+   "toCapture": [],
+   "increases": []
   },
   {
    "id": "f47",
@@ -3010,9 +3017,13 @@
      [
       "2027-08-28",
       7
+     ],
+     [
+      "2027-09-28",
+      2
      ]
     ],
-    "note": "No leases expire in the next four months. Anne Nichols (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28 and seven 2027-08-28."
+    "note": "No leases expire in the next four months. Anne Nichols (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28, seven 2027-08-28 and two 2027-09-28."
    },
    "arrears": {
     "source": "Resident Aged Receivables, Oct 2026",
@@ -3079,7 +3090,7 @@
      [
       "403",
       "Luke Bianco",
-      "Former resident, eviction file, with collections",
+      "Former resident, with collections",
       0,
       0,
       0,
@@ -4078,7 +4089,79 @@
     }
    ],
    "toursBooked": [],
-   "toCapture": []
+   "toCapture": [],
+   "increases": [
+    {
+     "num": "103",
+     "rent": 3750.0,
+     "newRent": null,
+     "earliest": "2027-04-20",
+     "noticeBy": "2027-01-20"
+    },
+    {
+     "num": "204",
+     "rent": 3005.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "205",
+     "rent": 3655.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "302",
+     "rent": 4295.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "303",
+     "rent": 4110.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "304",
+     "rent": 3010.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "305",
+     "rent": 3660.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "401",
+     "rent": 3675.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "403",
+     "rent": 7700.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "404",
+     "rent": 2515.0,
+     "newRent": null,
+     "earliest": "2027-05-01",
+     "noticeBy": "2027-01-31"
+    }
+   ]
   }
  ],
  "weeklyChecklist": [

@@ -60,10 +60,14 @@ def run(folder, prop_id, feed_path, snapshot=None):
         for k in ("committed", "committedCount", "signed", "signedCount", "signedBudget", "lossToLease", "inPlace", "occupiedCount", "futureRent", "fullBudget", "fullCount", "avgSuite", "avgSqft"):
             if k in fr:
                 d("rent", k, rt.get(k), fr[k])
-        rn = derive.renewals(rr, r["Expiring Leases"])
+        rn = derive.renewals(rr, r["Expiring Leases"], feed["dataThrough"])
         d("renewals", "firstEnd", rn["firstEnd"], p["renewals"].get("firstEnd"))
         if "byEnd" in p["renewals"]:
-            d("renewals", "byEnd", [list(x) for x in rn["byEnd"]], p["renewals"]["byEnd"])
+            d("renewals", "byEnd", rn["byEnd"], p["renewals"]["byEnd"])
+        if "increases" in p:
+            mine = derive.increases(rr, feed["dataThrough"])
+            d("increases", "rows", [(x["num"], x["rent"], x["earliest"], x["noticeBy"]) for x in mine],
+              [(x["num"], x["rent"], x["earliest"], x["noticeBy"]) for x in p["increases"]])
         inv = {x[0]: x for x in p["inventory"]["units"]}
         for s in av["units"]:
             f = inv.get(s["unit"])

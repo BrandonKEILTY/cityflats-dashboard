@@ -106,12 +106,57 @@ def arrears(ar):
     }
 
 
-def renewals(rr, ex):
-    cur = [s for s in rr["suites"] if s["status"].startswith("Occupied")]
-    pool = cur or rr["future"]
-    ends = sorted(x["lease_end"] for x in pool if x.get("lease_end"))
-    by = Counter(ends)
-    return {"expiring120": len(ex["rows"]) if ex else None, "firstEnd": ends[0] if ends else None, "byEnd": sorted(by.items())}
+def add_months(iso, n):
+    """'2026-10-01' + 12 months -> '2027-10-01'. A day that does not exist in the new month moves to its last day."""
+    y, m, d = int(iso[:4]), int(iso[5:7]), int(iso[8:10])
+    m0 = m - 1 + n
+    y, m = y + m0 // 12, m0 % 12 + 1
+    last = [31, 29 if y % 4 == 0 and (y % 100 != 0 or y % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
+    return f"{y:04d}-{m:02d}-{min(d, last):02d}"
+
+
+def add_days(iso, n):
+    from datetime import date, timedelta
+    d = date(int(iso[:4]), int(iso[5:7]), int(iso[8:10])) + timedelta(days=n)
+    return d.isoformat()
+
+
+def leases(rr):
+    """Every lease on the Rent Roll: current residents and future residents. One row per lease."""
+    out = []
+    for s in rr["suites"]:
+        if s["status"].startswith("Occupied") and s.get("resident"):
+            out.append({"num": s["unit"], "rent": s.get("scheduled"), "start": s.get("lease_start"), "end": s.get("lease_end")})
+    for f in rr["future"]:
+        out.append({"num": f["unit"], "rent": f.get("scheduled"), "start": f.get("lease_start"), "end": f.get("lease_end")})
+    return out
+
+
+def renewals(rr, ex, today):
+    """Lease ends from the Rent Roll. byEnd is [date, count] pairs for the next 12 months only (from today,
+    which is dataThrough). firstEnd is the earliest lease end overall. expiring120 is the Expiring Leases count."""
+    ends = sorted(l["end"] for l in leases(rr) if l["end"])
+    horizon = add_months(today, 12)
+    by = Counter(e for e in ends if today <= e <= horizon)
+    return {"expiring120": len(ex["rows"]) if ex else None, "firstEnd": ends[0] if ends else None,
+            "byEnd": [[d, c] for d, c in sorted(by.items())]}
+
+
+def increases(rr, today, window_months=6):
+    """Rent increases, one row per lease: the earliest date a new rent can take effect is 12 months after the rent
+    last changed (the lease start on the Rent Roll), and notice is due 90 days before that. Only leases whose notice
+    date falls by today + 6 months are listed (notices already due are included). newRent stays None until the
+    rule for it is confirmed."""
+    horizon = add_months(today, window_months)
+    rows = []
+    for l in leases(rr):
+        if not l["start"] or not l["rent"]:
+            continue
+        earliest = add_months(l["start"], 12)
+        notice = add_days(earliest, -90)
+        if notice <= horizon:
+            rows.append({"num": l["num"], "rent": l["rent"], "newRent": None, "earliest": earliest, "noticeBy": notice})
+    return sorted(rows, key=lambda r: (r["noticeBy"], r["num"]))
 
 
 def concessions(cn, rr):

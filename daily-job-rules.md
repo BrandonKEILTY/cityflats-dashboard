@@ -108,7 +108,8 @@ Examples:
   - stack
   - deals
   - rent.*
-  - renewals.byEnd (counts by lease end date)
+  - renewals.byEnd: [date, count] pairs for lease ends in the next 12 months only (current and future residents)
+  - increases: one row per lease, {num, rent, newRent, earliest, noticeBy}. earliest = lease start + 12 months; noticeBy = earliest minus 90 days; only rows whose noticeBy is by dataThrough + 6 months; newRent stays null until Brandon confirms the rule
 - Status rules:
   - occupied = current resident
   - leased (Grove) or "Leased, moving in" (F47) = future resident with last month's rent received (Deposit Held > 0, or a negative Balance / Pre-Payment)
@@ -136,6 +137,7 @@ Examples:
   - Status examples: "Current resident, October rent", "Current resident (renewed), October rent", "Former resident, with collections", "Former resident, eviction file, with collections".
   - Comment = Last Delinquency Note shortened to its date and gist, or "".
 - note in a sentence.
+- Status wording: the page finds former residents in collections by the word "collections" in the status, so write "Former resident, with collections" (or "Former resident" when not in collections). Never write legal steps or file numbers in any status, comment or note: no "eviction", "LTB", "N4", hearings or file numbers. Do not copy Entrata's status text.
 - Do not show pre-payments or credits anywhere.
 
 ### Lease Term Progress Summary

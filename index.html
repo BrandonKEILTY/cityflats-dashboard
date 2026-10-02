@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Cityflats Dashboard</title>
+<!-- keilty-template 2026-10-02.8 -->
 <style>
   /* Layout: a quiet white header carrying the City Flats wordmark, a sticky
      bar to move between the portfolio overview and one property at a time,
@@ -341,12 +342,18 @@
 
   footer{border-top:1px solid var(--line);margin-top:44px;padding-top:16px;font-size:12px;color:var(--muted);line-height:1.7}
   footer b{color:var(--keilty);letter-spacing:.04em}
+  /* rent increases, shared with every KEILTY dashboard */
+  .inc{display:grid;grid-template-columns:minmax(80px,.8fr) minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr);gap:4px 14px;padding:9px 16px;border-top:1px solid var(--line2);font-size:13.5px;align-items:baseline;font-variant-numeric:tabular-nums}
+  .inc .u{font-weight:bold}
+  @media(max-width:620px){.inc{grid-template-columns:minmax(0,1fr) auto}}
+  .tag{display:inline-block;font-size:10.5px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2px 8px;background:var(--line2);color:var(--muted);white-space:nowrap}
+  .tag.a{background:var(--amber-tile);color:var(--amber)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <header class="mast">
   <div class="wrap">
-    <img class="cf" src="cityflats-logo.png" alt="Cityflats" width="646" height="154">
+    <img class="cf" src="data:image/png;base64,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" alt="Cityflats" width="646" height="154">
     <span class="pipe"></span><span class="ttl">Dashboard</span>
     <div class="right">
       <div class="mby">Managed by <span class="kplate"><svg viewBox="0 0 645 115" role="img" aria-label="KEILTY"><g fill="#FFFFFF">
@@ -372,7 +379,4177 @@
 
 
 
-<script src="data.js"></script>
+<script>/* Fallback figures, used only until the live figures load from the dashboard database (dash/feed). */
+/* City Flats dashboard feed, 2026-10-02.
+   Each section names its source: the Entrata package (most figures) or the
+   Command Center (weekly figures, open items, team notes). Anything with no
+   source is listed under missing and shows as a red pill; a report in the
+   package that needs its settings changed shows as an amber pill. */
+window.CLIENT_FEED = {
+ "asAt": "2026-10-02",
+ "generated": "2026-10-02 06:15",
+ "client": "Centennial Land Development LP and Faculty 47 Development LP",
+ "short": "Cityflats portfolio",
+ "properties": [
+  {
+   "id": "grove",
+   "name": "The Cedar at the Grove",
+   "address": "1245 Centennial Drive, Kingston",
+   "entity": "Centennial Land Development LP",
+   "mode": "leaseup",
+   "units": 82,
+   "rentable": 81,
+   "model": 1,
+   "target": "2027-03-01",
+   "targetSource": "management agreement",
+   "package": {
+    "received": "2026-10-02",
+    "reports": [
+     "Activity Log, Leasing (The Grove package)",
+     "Availability (The Grove package)",
+     "Concessions (The Grove package)",
+     "Expiring Leases (The Grove package)",
+     "Income Statement, Budget vs Actual (The Grove package)",
+     "Income Statement, Trailing 12 (The Grove package)",
+     "Lease Term Progress Summary (The Grove package)",
+     "Rent Roll (The Grove package)",
+     "Rentable Items Availability (The Grove package)",
+     "Resident Aged Receivables (The Grove package)",
+     "Work Order Details (The Grove package)"
+    ]
+   },
+   "counts": {
+    "leased": 16,
+    "inProgress": 14,
+    "applications": 0,
+    "available": 51,
+    "toursToday": 2
+   },
+   "funnel": {
+    "source": "Lease Term Progress Summary",
+    "stages": [
+     [
+      "Guest card completed",
+      18,
+      "02:23:08"
+     ],
+     [
+      "Application started",
+      5,
+      "00:20:46"
+     ],
+     [
+      "Application partially completed",
+      1,
+      "01:18:51"
+     ],
+     [
+      "Application completed",
+      3,
+      "03:17:12"
+     ],
+     [
+      "Application approved",
+      1,
+      "00:05:08"
+     ],
+     [
+      "Lease started",
+      2,
+      "00:07:25"
+     ],
+     [
+      "Lease partially completed",
+      0,
+      "00:00:00"
+     ],
+     [
+      "Lease completed",
+      0,
+      "01:11:36"
+     ],
+     [
+      "Lease approved",
+      4,
+      null
+     ]
+    ],
+    "total": 34,
+    "avgTotal": "11:08:06"
+   },
+   "delivery": [
+    {
+     "date": "2027-01-01",
+     "suites": 37,
+     "floors": "floors 1 to 3, including the model suite"
+    },
+    {
+     "date": "2027-03-01",
+     "suites": 45,
+     "floors": "floors 4 to 6"
+    }
+   ],
+   "stack": [
+    [
+     "101",
+     "View",
+     "progress"
+    ],
+    [
+     "102",
+     "Wood",
+     "leased"
+    ],
+    [
+     "103",
+     "Hill",
+     "model"
+    ],
+    [
+     "104",
+     "Brook",
+     "progress"
+    ],
+    [
+     "105",
+     "Brook",
+     "progress"
+    ],
+    [
+     "106",
+     "Place",
+     "available"
+    ],
+    [
+     "107",
+     "Lane",
+     "leased"
+    ],
+    [
+     "201",
+     "Pointe",
+     "available"
+    ],
+    [
+     "202",
+     "Park",
+     "leased"
+    ],
+    [
+     "203",
+     "View",
+     "progress"
+    ],
+    [
+     "204",
+     "View",
+     "progress"
+    ],
+    [
+     "205",
+     "Wood",
+     "leased"
+    ],
+    [
+     "206",
+     "View",
+     "available"
+    ],
+    [
+     "207",
+     "Hill",
+     "available"
+    ],
+    [
+     "208",
+     "Bluff",
+     "available"
+    ],
+    [
+     "209",
+     "Brook",
+     "progress"
+    ],
+    [
+     "210",
+     "Ridge",
+     "progress"
+    ],
+    [
+     "211",
+     "Brook",
+     "leased"
+    ],
+    [
+     "212",
+     "Ridge",
+     "available"
+    ],
+    [
+     "213",
+     "Glen",
+     "progress"
+    ],
+    [
+     "214",
+     "Ridge",
+     "progress"
+    ],
+    [
+     "215",
+     "Crest",
+     "available"
+    ],
+    [
+     "301",
+     "Pointe",
+     "available"
+    ],
+    [
+     "302",
+     "Park",
+     "leased"
+    ],
+    [
+     "303",
+     "View",
+     "leased"
+    ],
+    [
+     "304",
+     "View",
+     "available"
+    ],
+    [
+     "305",
+     "Wood",
+     "available"
+    ],
+    [
+     "306",
+     "View",
+     "leased"
+    ],
+    [
+     "307",
+     "Hill",
+     "available"
+    ],
+    [
+     "308",
+     "Bluff",
+     "available"
+    ],
+    [
+     "309",
+     "Brook",
+     "leased"
+    ],
+    [
+     "310",
+     "Ridge",
+     "available"
+    ],
+    [
+     "311",
+     "Brook",
+     "progress"
+    ],
+    [
+     "312",
+     "Ridge",
+     "available"
+    ],
+    [
+     "313",
+     "Glen",
+     "available"
+    ],
+    [
+     "314",
+     "Ridge",
+     "available"
+    ],
+    [
+     "315",
+     "Crest",
+     "available"
+    ],
+    [
+     "401",
+     "Pointe",
+     "available"
+    ],
+    [
+     "402",
+     "Park",
+     "available"
+    ],
+    [
+     "403",
+     "View",
+     "leased"
+    ],
+    [
+     "404",
+     "View",
+     "progress"
+    ],
+    [
+     "405",
+     "Wood",
+     "available"
+    ],
+    [
+     "406",
+     "View",
+     "available"
+    ],
+    [
+     "407",
+     "Hill",
+     "available"
+    ],
+    [
+     "408",
+     "Bluff",
+     "available"
+    ],
+    [
+     "409",
+     "Brook",
+     "available"
+    ],
+    [
+     "410",
+     "Ridge",
+     "available"
+    ],
+    [
+     "411",
+     "Brook",
+     "progress"
+    ],
+    [
+     "412",
+     "Ridge",
+     "available"
+    ],
+    [
+     "413",
+     "Glen",
+     "available"
+    ],
+    [
+     "414",
+     "Ridge",
+     "available"
+    ],
+    [
+     "415",
+     "Crest",
+     "available"
+    ],
+    [
+     "501",
+     "Pointe",
+     "available"
+    ],
+    [
+     "502",
+     "Park",
+     "progress"
+    ],
+    [
+     "503",
+     "View",
+     "available"
+    ],
+    [
+     "504",
+     "View",
+     "progress"
+    ],
+    [
+     "505",
+     "Wood",
+     "available"
+    ],
+    [
+     "506",
+     "View",
+     "leased"
+    ],
+    [
+     "507",
+     "Hill",
+     "available"
+    ],
+    [
+     "508",
+     "Bluff",
+     "available"
+    ],
+    [
+     "509",
+     "Brook",
+     "available"
+    ],
+    [
+     "510",
+     "Ridge",
+     "available"
+    ],
+    [
+     "511",
+     "Brook",
+     "available"
+    ],
+    [
+     "512",
+     "Ridge",
+     "available"
+    ],
+    [
+     "513",
+     "Glen",
+     "available"
+    ],
+    [
+     "514",
+     "Ridge",
+     "available"
+    ],
+    [
+     "515",
+     "Crest",
+     "available"
+    ],
+    [
+     "601",
+     "Pointe",
+     "leased"
+    ],
+    [
+     "602",
+     "Park",
+     "leased"
+    ],
+    [
+     "603",
+     "View",
+     "available"
+    ],
+    [
+     "604",
+     "View",
+     "leased"
+    ],
+    [
+     "605",
+     "Wood",
+     "available"
+    ],
+    [
+     "606",
+     "View",
+     "leased"
+    ],
+    [
+     "607",
+     "Hill",
+     "available"
+    ],
+    [
+     "608",
+     "Bluff",
+     "available"
+    ],
+    [
+     "609",
+     "Brook",
+     "leased"
+    ],
+    [
+     "610",
+     "Ridge",
+     "available"
+    ],
+    [
+     "611",
+     "Brook",
+     "available"
+    ],
+    [
+     "612",
+     "Ridge",
+     "available"
+    ],
+    [
+     "613",
+     "Glen",
+     "available"
+    ],
+    [
+     "614",
+     "Ridge",
+     "available"
+    ],
+    [
+     "615",
+     "Crest",
+     "available"
+    ]
+   ],
+   "deals": [
+    {
+     "unit": "101",
+     "plan": "View",
+     "rent": 1700,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "104",
+     "plan": "Brook",
+     "rent": 1313,
+     "movein": "2027-03-01"
+    },
+    {
+     "unit": "105",
+     "plan": "Brook",
+     "rent": 1313,
+     "movein": "2027-01-02"
+    },
+    {
+     "unit": "203",
+     "plan": "View",
+     "rent": 1720,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "204",
+     "plan": "View",
+     "rent": 1710,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "209",
+     "plan": "Brook",
+     "rent": 1313,
+     "movein": "2027-01-02"
+    },
+    {
+     "unit": "210",
+     "plan": "Ridge",
+     "rent": 2510,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "213",
+     "plan": "Glen",
+     "rent": 2250,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "214",
+     "plan": "Ridge",
+     "rent": 2520,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "311",
+     "plan": "Brook",
+     "rent": 1313,
+     "movein": "2027-01-01"
+    },
+    {
+     "unit": "404",
+     "plan": "View",
+     "rent": 1730,
+     "movein": "2027-03-01"
+    },
+    {
+     "unit": "411",
+     "plan": "Brook",
+     "rent": 1313,
+     "movein": "2027-03-01"
+    },
+    {
+     "unit": "502",
+     "plan": "Park",
+     "rent": 2900,
+     "movein": "2027-03-01"
+    },
+    {
+     "unit": "504",
+     "plan": "View",
+     "rent": 1740,
+     "movein": "2027-03-01"
+    }
+   ],
+   "inventory": {
+    "source": "Availability",
+    "plans": [
+     [
+      "Brook",
+      "1 bed",
+      4,
+      1313,
+      1660,
+      0,
+      4
+     ],
+     [
+      "View",
+      "1 bed",
+      5,
+      1710,
+      1760,
+      2,
+      3
+     ],
+     [
+      "Wood",
+      "1 bed",
+      4,
+      1730,
+      1760,
+      1,
+      3
+     ],
+     [
+      "Place",
+      "2 bed",
+      1,
+      2150,
+      2150,
+      1,
+      0
+     ],
+     [
+      "Glen",
+      "2 bed",
+      4,
+      2380,
+      2410,
+      1,
+      3
+     ],
+     [
+      "Bluff",
+      "2 bed",
+      5,
+      2510,
+      2550,
+      2,
+      3
+     ],
+     [
+      "Ridge",
+      "2 bed",
+      13,
+      2510,
+      2560,
+      4,
+      9
+     ],
+     [
+      "Hill",
+      "2 bed",
+      5,
+      2300,
+      2560,
+      2,
+      3
+     ],
+     [
+      "Crest",
+      "2 bed",
+      5,
+      2530,
+      2570,
+      2,
+      3
+     ],
+     [
+      "Pointe",
+      "3 bed",
+      4,
+      2880,
+      2910,
+      2,
+      2
+     ],
+     [
+      "Park",
+      "3 bed",
+      1,
+      2890,
+      2890,
+      0,
+      1
+     ]
+    ],
+    "askingAvg": 2326,
+    "unleasedMonthly": 118636,
+    "units": [
+     [
+      "101",
+      "View",
+      551,
+      1700,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "102",
+      "Wood",
+      551,
+      1700,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "103",
+      "Hill",
+      756,
+      2250,
+      "2027-01-01",
+      "Model suite"
+     ],
+     [
+      "104",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "105",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "106",
+      "Place",
+      771,
+      2150,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "107",
+      "Lane",
+      551,
+      1700,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "201",
+      "Pointe",
+      1038,
+      2880,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "202",
+      "Park",
+      1038,
+      2870,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "203",
+      "View",
+      551,
+      1720,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "204",
+      "View",
+      551,
+      1710,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "205",
+      "Wood",
+      551,
+      1720,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "206",
+      "View",
+      551,
+      1710,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "207",
+      "Hill",
+      756,
+      2300,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "208",
+      "Bluff",
+      867,
+      2510,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "209",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "210",
+      "Ridge",
+      850,
+      2510,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "211",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "212",
+      "Ridge",
+      850,
+      2510,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "213",
+      "Glen",
+      771,
+      2250,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "214",
+      "Ridge",
+      850,
+      2520,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "215",
+      "Crest",
+      850,
+      2530,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "301",
+      "Pointe",
+      1038,
+      2890,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "302",
+      "Park",
+      1038,
+      2880,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "303",
+      "View",
+      551,
+      1730,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "304",
+      "View",
+      551,
+      1720,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "305",
+      "Wood",
+      551,
+      1730,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "306",
+      "View",
+      551,
+      1720,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "307",
+      "Hill",
+      756,
+      2530,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "308",
+      "Bluff",
+      867,
+      2520,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "309",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Leased"
+     ],
+     [
+      "310",
+      "Ridge",
+      850,
+      2520,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "311",
+      "Brook",
+      479,
+      1313,
+      "2027-01-01",
+      "Lease in progress"
+     ],
+     [
+      "312",
+      "Ridge",
+      850,
+      2520,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "313",
+      "Glen",
+      771,
+      2380,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "314",
+      "Ridge",
+      850,
+      2530,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "315",
+      "Crest",
+      850,
+      2540,
+      "2027-01-01",
+      "Available"
+     ],
+     [
+      "401",
+      "Pointe",
+      1038,
+      2900,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "402",
+      "Park",
+      1038,
+      2890,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "403",
+      "View",
+      551,
+      1740,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "404",
+      "View",
+      551,
+      1730,
+      "2027-03-01",
+      "Lease in progress"
+     ],
+     [
+      "405",
+      "Wood",
+      551,
+      1740,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "406",
+      "View",
+      551,
+      1730,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "407",
+      "Hill",
+      756,
+      2540,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "408",
+      "Bluff",
+      867,
+      2530,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "409",
+      "Brook",
+      479,
+      1313,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "410",
+      "Ridge",
+      850,
+      2530,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "411",
+      "Brook",
+      479,
+      1313,
+      "2027-03-01",
+      "Lease in progress"
+     ],
+     [
+      "412",
+      "Ridge",
+      850,
+      2530,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "413",
+      "Glen",
+      771,
+      2390,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "414",
+      "Ridge",
+      850,
+      2540,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "415",
+      "Crest",
+      850,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "501",
+      "Pointe",
+      1038,
+      2910,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "502",
+      "Park",
+      1038,
+      2900,
+      "2027-03-01",
+      "Lease in progress"
+     ],
+     [
+      "503",
+      "View",
+      551,
+      1750,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "504",
+      "View",
+      551,
+      1740,
+      "2027-03-01",
+      "Lease in progress"
+     ],
+     [
+      "505",
+      "Wood",
+      551,
+      1750,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "506",
+      "View",
+      551,
+      1740,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "507",
+      "Hill",
+      756,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "508",
+      "Bluff",
+      867,
+      2540,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "509",
+      "Brook",
+      479,
+      1650,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "510",
+      "Ridge",
+      850,
+      2540,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "511",
+      "Brook",
+      479,
+      1313,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "512",
+      "Ridge",
+      850,
+      2540,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "513",
+      "Glen",
+      771,
+      2400,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "514",
+      "Ridge",
+      850,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "515",
+      "Crest",
+      850,
+      2560,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "601",
+      "Pointe",
+      1038,
+      2920,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "602",
+      "Park",
+      1038,
+      2910,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "603",
+      "View",
+      551,
+      1760,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "604",
+      "View",
+      551,
+      1750,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "605",
+      "Wood",
+      551,
+      1760,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "606",
+      "View",
+      551,
+      1750,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "607",
+      "Hill",
+      756,
+      2560,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "608",
+      "Bluff",
+      867,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "609",
+      "Brook",
+      479,
+      1660,
+      "2027-03-01",
+      "Leased"
+     ],
+     [
+      "610",
+      "Ridge",
+      850,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "611",
+      "Brook",
+      479,
+      1660,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "612",
+      "Ridge",
+      850,
+      2550,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "613",
+      "Glen",
+      771,
+      2410,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "614",
+      "Ridge",
+      850,
+      2560,
+      "2027-03-01",
+      "Available"
+     ],
+     [
+      "615",
+      "Crest",
+      850,
+      2570,
+      "2027-03-01",
+      "Available"
+     ]
+    ]
+   },
+   "renewals": {
+    "source": "Expiring Leases",
+    "expiring120": 0,
+    "firstEnd": "2027-07-19",
+    "note": "No leases expire in the next four months. All leases start in 2027; the first ends 2027-07-19."
+   },
+   "arrears": {
+    "source": "Resident Aged Receivables",
+    "owing": 0,
+    "current": 0,
+    "unallocated": 279.45,
+    "note": "Nothing is owed.",
+    "detail": []
+   },
+   "rent": {
+    "source": "Rent Roll",
+    "signed": 31416,
+    "signedBudget": 31416,
+    "signedCount": 16,
+    "avgSuite": 1964,
+    "avgSqft": 2.98,
+    "lossToLease": 0,
+    "committed": 56761,
+    "committedCount": 30,
+    "fullBudget": 175397,
+    "fullCount": 81
+   },
+   "concessions": {
+    "source": "Concessions, Sep 2026",
+    "units": [
+     {
+      "unit": "107",
+      "plan": "Lane",
+      "term": "12 months",
+      "total": 960
+     },
+     {
+      "unit": "202",
+      "plan": "Park",
+      "term": "12 months",
+      "total": 8517.42
+     },
+     {
+      "unit": "306",
+      "plan": "View",
+      "term": "12 months",
+      "total": 1000
+     },
+     {
+      "unit": "601",
+      "plan": "Pointe",
+      "term": "12 months",
+      "total": 5840
+     }
+    ],
+    "total": 16317.42,
+    "note": "Totals per lease, rent and parking concessions together."
+   },
+   "budget": {
+    "source": "Income Statement, Budget vs Actual, Sep 2026",
+    "period": "Sep 2026",
+    "lines": [
+     [
+      "Interest on last month's rent deposits",
+      7.61,
+      0,
+      13.21,
+      0
+     ],
+     [
+      "Administration",
+      1288.06,
+      4904,
+      30768.89,
+      15590
+     ],
+     [
+      "Payroll",
+      5600.96,
+      5600,
+      50408.64,
+      44800
+     ],
+     [
+      "Management fees",
+      6154.87,
+      6955.17,
+      55393.83,
+      62596.53
+     ],
+     [
+      "Advertising and promotion",
+      23316.13,
+      8850,
+      65110.61,
+      158403
+     ],
+     [
+      "Telecommunications",
+      496.83,
+      1169,
+      2573.08,
+      16119
+     ]
+    ],
+    "noi": [
+     -36849.24,
+     -27478.17,
+     -204241.84,
+     -297508.53
+    ],
+    "annualNoi": -375601.04,
+    "noiMonths": [
+     "2026-01",
+     "2026-02",
+     "2026-03",
+     "2026-04",
+     "2026-05",
+     "2026-06",
+     "2026-07",
+     "2026-08",
+     "2026-09"
+    ],
+    "noiTrend": [
+     -12555.96,
+     -12635.38,
+     -26529.03,
+     -16897.32,
+     -26819.68,
+     -20770.08,
+     -26190.97,
+     -24994.18,
+     -36849.24
+    ],
+    "note": "No rent is collected before the first move ins in 2027. September advertising includes $15,970.80 of signage."
+   },
+   "checks": [],
+   "missing": [
+    {
+     "sec": "wait",
+     "level": "team",
+     "what": "Client items (Awaiting your input)",
+     "need": "open items owned by the client, logged under the client on the Command Center"
+    },
+    {
+     "sec": "work",
+     "level": "team",
+     "what": "What we are working on",
+     "need": "every open KEILTY item, with its latest update"
+    },
+    {
+     "sec": "leasing",
+     "level": "team",
+     "what": "Tours booked ahead",
+     "need": "upcoming tours with name, date and time; Entrata gives only a count"
+    }
+   ],
+   "weeks": [
+    {
+     "week": "2026-04-22",
+     "leads": 16,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-29",
+     "leads": 15,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-06",
+     "leads": 17,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-13",
+     "leads": 17,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-20",
+     "leads": 15,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-27",
+     "leads": 40,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-03",
+     "leads": 21,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-10",
+     "leads": 19,
+     "tours": 4,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-17",
+     "leads": 9,
+     "tours": 8,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-24",
+     "leads": 15,
+     "tours": 9,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-01",
+     "leads": 21,
+     "tours": 4,
+     "apps": null,
+     "pending": null,
+     "leased": 1,
+     "avail": 81,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-08",
+     "leads": 19,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 2,
+     "avail": 80,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-15",
+     "leads": 13,
+     "tours": 3,
+     "apps": null,
+     "pending": null,
+     "leased": 3,
+     "avail": 79,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-22",
+     "leads": 17,
+     "tours": 6,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-29",
+     "leads": 14,
+     "tours": 3,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-08-05",
+     "leads": 21,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-08-12",
+     "leads": 22,
+     "tours": 2,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": 3,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-08-19",
+     "leads": 30,
+     "tours": 0,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": 3,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-08-26",
+     "leads": 18,
+     "tours": 12,
+     "apps": null,
+     "pending": null,
+     "leased": 5,
+     "avail": 77,
+     "pleased": 7,
+     "wo": null
+    },
+    {
+     "week": "2026-09-02",
+     "leads": 17,
+     "tours": 5,
+     "apps": 6,
+     "pending": 1,
+     "leased": 6,
+     "avail": 76,
+     "pleased": 7,
+     "wo": null
+    },
+    {
+     "week": "2026-09-09",
+     "leads": 28,
+     "tours": 3,
+     "apps": 2,
+     "pending": 5,
+     "leased": 8,
+     "avail": 74,
+     "pleased": 7,
+     "wo": null
+    },
+    {
+     "week": "2026-09-16",
+     "leads": 17,
+     "tours": 20,
+     "apps": 6,
+     "pending": 7,
+     "leased": 10,
+     "avail": 72,
+     "pleased": 7,
+     "wo": null
+    },
+    {
+     "week": "2026-09-30",
+     "leads": 29,
+     "tours": 20,
+     "apps": 6,
+     "pending": 8,
+     "leased": 15,
+     "avail": 67,
+     "pleased": 10,
+     "wo": 1
+    }
+   ],
+   "missedWeeks": [
+    "2026-09-23"
+   ],
+   "waiting": [
+    {
+     "area": "Marketing",
+     "what": "Feedback on the billboards and other display ads.",
+     "since": "2026-08-26",
+     "last": "2026-09-30: still waiting."
+    },
+    {
+     "area": "Marketing",
+     "what": "Brand and marketing intake.",
+     "since": "2026-09-01",
+     "last": "2026-09-30: waiting on the Faculty47 and Grove decision."
+    },
+    {
+     "area": "Accounting",
+     "what": "Operating budget information, per our email of 2026-09-03.",
+     "since": "2026-09-09",
+     "last": "2026-09-30: waiting on a reply."
+    },
+    {
+     "area": "Maintenance",
+     "what": "Snow clearing, per our email of 2026-09-02.",
+     "since": "2026-09-09",
+     "last": "2026-09-30: waiting on a reply."
+    },
+    {
+     "area": "Leasing",
+     "what": "New pricing for the Grove.",
+     "since": "2026-09-30",
+     "last": "Raised 2026-09-30."
+    }
+   ],
+   "working": [
+    {
+     "area": "Maintenance",
+     "what": "Double bed for the model suite",
+     "since": "2026-09-30",
+     "notes": [
+      [
+       "2026-09-30",
+       "Being ordered."
+      ]
+     ]
+    },
+    {
+     "area": "Marketing",
+     "what": "Threshold website and advertising options",
+     "since": "2026-08-12",
+     "notes": [
+      [
+       "2026-09-30",
+       "On hold pending the combined Faculty47 and Grove proposal."
+      ],
+      [
+       "2026-09-16",
+       "Paused while Faculty47 is merged in."
+      ],
+      [
+       "2026-08-12",
+       "Meetings booked with other agencies to understand the options."
+      ]
+     ]
+    }
+   ],
+   "workOrders": [
+    {
+     "ref": "17445368",
+     "unit": "",
+     "problem": "BMX setup, deferred maintenance task for early December",
+     "status": "Suspended",
+     "created": "2026-09-28",
+     "due": "2026-12-07",
+     "age": 4,
+     "notes": []
+    }
+   ],
+   "stalls": 86,
+   "leaseupPts": [
+    [
+     "2026-04-22",
+     1
+    ],
+    [
+     "2026-06-03",
+     1
+    ],
+    [
+     "2026-07-01",
+     1
+    ],
+    [
+     "2026-07-22",
+     5
+    ],
+    [
+     "2026-08-19",
+     5
+    ],
+    [
+     "2026-08-26",
+     5
+    ],
+    [
+     "2026-09-02",
+     6
+    ],
+    [
+     "2026-09-09",
+     8
+    ],
+    [
+     "2026-09-16",
+     10
+    ],
+    [
+     "2026-09-30",
+     15
+    ]
+   ],
+   "toursDate": "2026-10-01",
+   "history": [
+    {
+     "date": "2026-09-30",
+     "apps": 11,
+     "leased": 14,
+     "inProgress": 16,
+     "holds": 2,
+     "available": 49,
+     "parking": 10,
+     "wo": 1,
+     "owing": 0,
+     "tours": 5,
+     "leads": 19
+    },
+    {
+     "date": "2026-10-01",
+     "leads": 18,
+     "apps": 10,
+     "leased": 16,
+     "inProgress": 14,
+     "holds": 0,
+     "available": 51,
+     "parking": 11,
+     "wo": 1,
+     "owing": 0,
+     "tours": 2
+    }
+   ],
+   "prospects": [
+    {
+     "name": "Muhammed Yakub",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-10-01 13:48",
+       "Tour",
+       "Military professional looking to move in 2027-01-01. Would not qualify for the affordable housing Brook suite but qualifies for the $1,000 military discount. Shown all three one bedroom plans and liked them all; thinking it over, with a follow-up today. One car, no pets."
+      ]
+     ]
+    },
+    {
+     "name": "Freddie Kehoe",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-10-01 14:39",
+       "Tour",
+       "Second tour, this time for his partner. She felt the one bedrooms are too small for a work-from-home desk, including the Glen shown as a one bedroom and den, and is leaning towards a View suite on a higher floor. One car, no pets; asked about covered parking for part of the year."
+      ]
+     ]
+    },
+    {
+     "name": "Jesse Botelho",
+     "unit": "211",
+     "status": "Application: Started",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-09-30 12:03",
+       "Tour",
+       "Toured the affordable housing Brook suite. Application started; 2025 notice of assessment requested, with a parent to sign as guarantor if needed. January move in; one car, one cat."
+      ]
+     ]
+    },
+    {
+     "name": "Christopher Sturgeon",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-09-30 11:35",
+       "Tour",
+       "Toured all three one bedroom plans; income is above the affordable housing limit. Asked for floor plans of all three. One car, March move in, wants a rent controlled suite."
+      ]
+     ]
+    },
+    {
+     "name": "Lois Jaja",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-09-30 14:15",
+       "Tour",
+       "Interested in the fifth floor affordable housing suite for March. A guarantor was suggested. No car, no pets."
+      ]
+     ]
+    },
+    {
+     "name": "Varalakshmi Manish",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-09-30 14:16",
+       "Tour",
+       "Family with one child, one bedroom only. Interested in the second floor View suite for January. Two cars; the second goes on the parking wait list."
+      ]
+     ]
+    },
+    {
+     "name": "Payge Coleman",
+     "unit": "",
+     "status": "Guest Card: Completed",
+     "agent": "Cassandra Mercier",
+     "entries": [
+      [
+       "2026-09-30 14:47",
+       "Tour",
+       "Viewed the lowest priced one bedroom; did not qualify for the affordable housing rate and said she was not interested. Her mother noted the website does not say the lower price is affordable housing, or that two months free applies to two bedrooms only."
+      ]
+     ]
+    },
+    {
+     "name": "Leslie Ainslie",
+     "unit": "101",
+     "status": "Lease: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:38",
+       "Notes",
+       "Lease sent 2026-09-03; signed, last month's rent outstanding. No response despite repeated follow-ups."
+      ]
+     ]
+    },
+    {
+     "name": "Ethan Chouinard",
+     "unit": "203",
+     "status": "Lease: Started",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:30",
+       "Notes",
+       "Lease sent 2026-09-14; waiting on signature. No response despite repeated follow-ups."
+      ]
+     ]
+    },
+    {
+     "name": "Angel Edwards",
+     "unit": "411",
+     "status": "Application: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:27",
+       "Notes",
+       "Waiting on the guarantor's documents."
+      ]
+     ]
+    },
+    {
+     "name": "Kelly Ferguson",
+     "unit": "214",
+     "status": "Lease: Partially Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:20",
+       "Notes",
+       "Revised lease sent 2026-09-29; waiting on signature before asking for the agreed $2,000 partial payment."
+      ]
+     ]
+    },
+    {
+     "name": "Lisa Roberts",
+     "unit": "209",
+     "status": "Application: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:25",
+       "Notes",
+       "Waiting on her notice of assessment to confirm affordable housing eligibility."
+      ]
+     ]
+    },
+    {
+     "name": "Ammu Sasikumar",
+     "unit": "204",
+     "status": "Lease: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:35",
+       "Notes",
+       "Lease signed; last month's rent to follow."
+      ]
+     ]
+    },
+    {
+     "name": "Kolten Smith",
+     "unit": "404",
+     "status": "Lease: Partially Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:24",
+       "Notes",
+       "Lease sent; waiting on signature."
+      ]
+     ]
+    },
+    {
+     "name": "Elena Spendlove",
+     "unit": "504",
+     "status": "Lease: Started",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:36",
+       "Notes",
+       "Lease sent 2026-09-22; following up on signature."
+      ]
+     ]
+    },
+    {
+     "name": "Brandon St Croix",
+     "unit": "311",
+     "status": "Lease: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 14:48",
+       "Notes",
+       "Note added with no details."
+      ],
+      [
+       "2026-10-01 11:28",
+       "Notes",
+       "Lease sent; waiting on the guarantor's signature."
+      ]
+     ]
+    },
+    {
+     "name": "Star Sweet",
+     "unit": "105",
+     "status": "Lease: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 11:37",
+       "Notes",
+       "Lease sent 2026-09-28 and signed; last month's rent expected by Friday."
+      ]
+     ]
+    },
+    {
+     "name": "Rui Torres",
+     "unit": "502",
+     "status": "Lease: Completed",
+     "agent": "Bryan Neil Bulabos",
+     "entries": [
+      [
+       "2026-10-01 08:20",
+       "Notes",
+       "Paid half of last month's rent; the rest by 2026-10-05."
+      ]
+     ]
+    }
+   ],
+   "toursBooked": [],
+   "items": {
+    "source": "Rentable Items Availability",
+    "list": [
+     [
+      "P54",
+      "Reserved",
+      "205"
+     ],
+     [
+      "P55",
+      "Reserved",
+      "303"
+     ],
+     [
+      "P56",
+      "Reserved",
+      "202"
+     ],
+     [
+      "P57",
+      "Reserved",
+      "606"
+     ],
+     [
+      "P58",
+      "Reserved",
+      "606"
+     ],
+     [
+      "P59",
+      "Reserved",
+      "609"
+     ],
+     [
+      "P60",
+      "Available",
+      ""
+     ],
+     [
+      "P61",
+      "Available",
+      ""
+     ],
+     [
+      "P62",
+      "Available",
+      ""
+     ],
+     [
+      "P63",
+      "Available",
+      ""
+     ],
+     [
+      "P64",
+      "Available",
+      ""
+     ],
+     [
+      "P65",
+      "Available",
+      ""
+     ],
+     [
+      "P66",
+      "Available",
+      ""
+     ],
+     [
+      "P67 (accessible)",
+      "Available",
+      ""
+     ],
+     [
+      "P68 (accessible)",
+      "Available",
+      ""
+     ],
+     [
+      "P69",
+      "Reserved",
+      "107"
+     ],
+     [
+      "P70",
+      "Available",
+      ""
+     ],
+     [
+      "P71",
+      "Available",
+      ""
+     ],
+     [
+      "P72",
+      "Available",
+      ""
+     ],
+     [
+      "P73",
+      "Available",
+      ""
+     ],
+     [
+      "P74",
+      "Available",
+      ""
+     ],
+     [
+      "P75",
+      "Available",
+      ""
+     ],
+     [
+      "P76",
+      "Available",
+      ""
+     ],
+     [
+      "P77",
+      "Available",
+      ""
+     ],
+     [
+      "P78",
+      "Available",
+      ""
+     ],
+     [
+      "P79",
+      "Available",
+      ""
+     ],
+     [
+      "P80",
+      "Available",
+      ""
+     ],
+     [
+      "P81",
+      "Available",
+      ""
+     ],
+     [
+      "P82",
+      "Available",
+      ""
+     ],
+     [
+      "P83",
+      "Available",
+      ""
+     ],
+     [
+      "P84",
+      "Available",
+      ""
+     ],
+     [
+      "P100 (covered + accessible)",
+      "Reserved",
+      "601"
+     ],
+     [
+      "P101 (covered + accessible)",
+      "Available",
+      ""
+     ],
+     [
+      "P102 (covered)",
+      "Reserved",
+      "202"
+     ],
+     [
+      "P103 (covered)",
+      "Reserved",
+      "102"
+     ],
+     [
+      "P104 (covered)",
+      "Reserved",
+      "302"
+     ],
+     [
+      "P105 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P106 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P107 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P108 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P109 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P110 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P111 (covered)",
+      "Available",
+      ""
+     ],
+     [
+      "P112 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P113 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P114 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P115 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P116 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P117 (visitor)",
+      "Available",
+      ""
+     ],
+     [
+      "P118",
+      "Available",
+      ""
+     ],
+     [
+      "P119",
+      "Available",
+      ""
+     ],
+     [
+      "P120",
+      "Available",
+      ""
+     ],
+     [
+      "P121",
+      "Available",
+      ""
+     ],
+     [
+      "P122",
+      "Available",
+      ""
+     ],
+     [
+      "P123",
+      "Available",
+      ""
+     ],
+     [
+      "P124",
+      "Available",
+      ""
+     ],
+     [
+      "P125",
+      "Available",
+      ""
+     ],
+     [
+      "P126",
+      "Available",
+      ""
+     ],
+     [
+      "P127",
+      "Available",
+      ""
+     ],
+     [
+      "P128",
+      "Available",
+      ""
+     ],
+     [
+      "P129",
+      "Available",
+      ""
+     ],
+     [
+      "P130",
+      "Available",
+      ""
+     ],
+     [
+      "P131",
+      "Available",
+      ""
+     ],
+     [
+      "P132",
+      "Available",
+      ""
+     ],
+     [
+      "P133",
+      "Available",
+      ""
+     ],
+     [
+      "P134",
+      "Available",
+      ""
+     ],
+     [
+      "P135",
+      "Available",
+      ""
+     ],
+     [
+      "P136",
+      "Available",
+      ""
+     ],
+     [
+      "P137",
+      "Available",
+      ""
+     ],
+     [
+      "P138",
+      "Available",
+      ""
+     ],
+     [
+      "P139",
+      "Available",
+      ""
+     ],
+     [
+      "P140",
+      "Available",
+      ""
+     ],
+     [
+      "P141",
+      "Available",
+      ""
+     ],
+     [
+      "P142",
+      "Available",
+      ""
+     ],
+     [
+      "P143",
+      "Available",
+      ""
+     ],
+     [
+      "P144",
+      "Available",
+      ""
+     ],
+     [
+      "P145",
+      "Available",
+      ""
+     ],
+     [
+      "P146",
+      "Available",
+      ""
+     ],
+     [
+      "P147",
+      "Available",
+      ""
+     ],
+     [
+      "P148",
+      "Available",
+      ""
+     ],
+     [
+      "P149",
+      "Available",
+      ""
+     ],
+     [
+      "P150",
+      "Available",
+      ""
+     ],
+     [
+      "P151",
+      "Available",
+      ""
+     ],
+     [
+      "P152",
+      "Available",
+      ""
+     ],
+     [
+      "P153",
+      "Available",
+      ""
+     ],
+     [
+      "P154",
+      "Available",
+      ""
+     ]
+    ],
+    "occupied": 11,
+    "total": 86,
+    "note": "Surface stalls are $80 a month and covered stalls $120. The 11 reserved stalls belong to future residents and start when their leases do. Six visitor stalls (P112 to P117) are counted in the 86."
+   },
+   "toCapture": []
+  },
+  {
+   "id": "f47",
+   "name": "Faculty47",
+   "address": "47 Wellington Street, Kingston",
+   "entity": "Faculty 47 Development LP",
+   "mode": "stabilised",
+   "units": 17,
+   "rentable": 19,
+   "rentableNote": "17 suites; suite 301 is let by the room as 301A, 301B and 301C",
+   "stalls": 17,
+   "package": {
+    "received": "2026-10-02",
+    "reports": [
+     "Activity Log, Leasing (Faculty47 package)",
+     "Availability (Faculty47 package)",
+     "Concessions (Faculty47 package)",
+     "Expiring Leases (Faculty47 package)",
+     "Income Statement, Budget vs Actual (Faculty47 package)",
+     "Income Statement, Trailing 12 (Faculty47 package)",
+     "Lease Term Progress Summary (Faculty47 package)",
+     "Rent Roll (Faculty47 package)",
+     "Rentable Items Availability (Faculty47 package)",
+     "Resident Aged Receivables (Faculty47 package)",
+     "Work Order Details (Faculty47 package, current and prior year)"
+    ]
+   },
+   "counts": {
+    "occupied": 16,
+    "leased": 1,
+    "applications": 0,
+    "available": 1,
+    "toursToday": 0,
+    "inProgress": 1
+   },
+   "funnel": {
+    "source": "Lease Term Progress Summary",
+    "stages": [
+     [
+      "Guest card completed",
+      2,
+      "00:00:00"
+     ],
+     [
+      "Application started",
+      0,
+      null
+     ],
+     [
+      "Application partially completed",
+      0,
+      null
+     ],
+     [
+      "Application completed",
+      0,
+      null
+     ],
+     [
+      "Application approved",
+      0,
+      null
+     ],
+     [
+      "Lease started",
+      0,
+      null
+     ],
+     [
+      "Lease partially completed",
+      0,
+      null
+     ],
+     [
+      "Lease completed",
+      0,
+      null
+     ],
+     [
+      "Lease approved",
+      0,
+      null
+     ]
+    ],
+    "total": 2,
+    "avgTotal": "00:00:00"
+   },
+   "stack": [
+    [
+     "101",
+     "The Scholar",
+     "occupied"
+    ],
+    [
+     "102",
+     "The Arch",
+     "occupied"
+    ],
+    [
+     "103",
+     "The Legacy",
+     "occupied"
+    ],
+    [
+     "201",
+     "The Academy",
+     "occupied"
+    ],
+    [
+     "202",
+     "The Limestone",
+     "leased"
+    ],
+    [
+     "203",
+     "The Scholar",
+     "occupied"
+    ],
+    [
+     "204",
+     "The Arch",
+     "occupied"
+    ],
+    [
+     "205",
+     "The Legacy",
+     "occupied"
+    ],
+    [
+     "301A",
+     "The Heritage",
+     "occupied"
+    ],
+    [
+     "301B",
+     "The Heritage",
+     "available"
+    ],
+    [
+     "301C",
+     "The Heritage",
+     "progress"
+    ],
+    [
+     "302",
+     "The Concord",
+     "occupied"
+    ],
+    [
+     "303",
+     "The Scholar",
+     "occupied"
+    ],
+    [
+     "304",
+     "The Arch",
+     "occupied"
+    ],
+    [
+     "305",
+     "The Legacy",
+     "occupied"
+    ],
+    [
+     "401",
+     "The Archive",
+     "occupied"
+    ],
+    [
+     "402",
+     "The Lecture",
+     "occupied"
+    ],
+    [
+     "403",
+     "The Dean",
+     "occupied"
+    ],
+    [
+     "404",
+     "The Arch",
+     "occupied"
+    ]
+   ],
+   "deals": [
+    {
+     "unit": "202",
+     "plan": "The Limestone",
+     "rent": 1585,
+     "movein": "2026-10-01 (deposit held)"
+    },
+    {
+     "unit": "301C",
+     "plan": "The Heritage",
+     "rent": 1515,
+     "movein": "2026-10-01 (no deposit yet)"
+    }
+   ],
+   "inventory": {
+    "source": "Availability",
+    "plans": [
+     [
+      "The Heritage",
+      "room in suite 301",
+      1,
+      1515,
+      1515,
+      null,
+      null
+     ]
+    ],
+    "askingAvg": 1515,
+    "unleasedMonthly": 1515,
+    "units": [
+     [
+      "101",
+      "The Scholar",
+      869,
+      1165,
+      "",
+      "Occupied"
+     ],
+     [
+      "102",
+      "The Arch",
+      712,
+      3000,
+      "",
+      "Occupied"
+     ],
+     [
+      "103",
+      "The Legacy",
+      1040,
+      3650,
+      "",
+      "Occupied"
+     ],
+     [
+      "201",
+      "The Academy",
+      2159,
+      1585,
+      "",
+      "Occupied"
+     ],
+     [
+      "202",
+      "The Limestone",
+      1634,
+      1585,
+      "",
+      "Leased, moving in"
+     ],
+     [
+      "203",
+      "The Scholar",
+      858,
+      1205,
+      "",
+      "Occupied"
+     ],
+     [
+      "204",
+      "The Arch",
+      700,
+      3005,
+      "",
+      "Occupied"
+     ],
+     [
+      "205",
+      "The Legacy",
+      1050,
+      3655,
+      "",
+      "Occupied"
+     ],
+     [
+      "301A",
+      "The Heritage",
+      1329,
+      1525,
+      "",
+      "Occupied"
+     ],
+     [
+      "301B",
+      "The Heritage",
+      1329,
+      1515,
+      "",
+      "Available"
+     ],
+     [
+      "301C",
+      "The Heritage",
+      1329,
+      1515,
+      "",
+      "Lease in progress"
+     ],
+     [
+      "302",
+      "The Concord",
+      1169,
+      4295,
+      "",
+      "Occupied"
+     ],
+     [
+      "303",
+      "The Scholar",
+      858,
+      4270,
+      "",
+      "Occupied"
+     ],
+     [
+      "304",
+      "The Arch",
+      700,
+      3010,
+      "",
+      "Occupied"
+     ],
+     [
+      "305",
+      "The Legacy",
+      1050,
+      3660,
+      "",
+      "Occupied"
+     ],
+     [
+      "401",
+      "The Archive",
+      1133,
+      3675,
+      "",
+      "Occupied"
+     ],
+     [
+      "402",
+      "The Lecture",
+      1220,
+      3675,
+      "",
+      "Occupied"
+     ],
+     [
+      "403",
+      "The Dean",
+      1711,
+      7700,
+      "",
+      "Occupied"
+     ],
+     [
+      "404",
+      "The Arch",
+      700,
+      3015,
+      "",
+      "Occupied"
+     ]
+    ]
+   },
+   "renewals": {
+    "source": "Expiring Leases",
+    "expiring120": 0,
+    "firstEnd": "2027-04-28",
+    "byEnd": [
+     [
+      "2027-04-28",
+      8
+     ],
+     [
+      "2027-06-28",
+      1
+     ],
+     [
+      "2027-08-28",
+      7
+     ]
+    ],
+    "note": "No leases expire in the next four months. Anne Nichols (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28 and seven 2027-08-28."
+   },
+   "arrears": {
+    "source": "Resident Aged Receivables, Oct 2026",
+    "owing": 0,
+    "former": 13735.5,
+    "formerCount": 2,
+    "note": "Nothing is overdue. $10,700 of October charges from three suites and one parking stall had not come in yet. Two former residents owe $13,735.50, both over 90 days and with collections.",
+    "detail": [
+     [
+      "103",
+      "Callum Smith",
+      "Current resident, October rent",
+      1500,
+      0,
+      0,
+      0,
+      1500,
+      ""
+     ],
+     [
+      "201",
+      "Adam Yhap",
+      "Current resident, October rent",
+      4755,
+      0,
+      0,
+      0,
+      4755,
+      ""
+     ],
+     [
+      "302",
+      "Anne Nichols",
+      "Current resident (renewed), October rent",
+      4295,
+      0,
+      0,
+      0,
+      4295,
+      ""
+     ],
+     [
+      "Parking",
+      "Jason Scott",
+      "Current resident, October parking",
+      150,
+      0,
+      0,
+      0,
+      150,
+      ""
+     ],
+     [
+      "304",
+      "Xinyuan Zhang",
+      "Former resident, with collections",
+      0,
+      0,
+      0,
+      6800,
+      6800,
+      "2026-03-03: filed to collections, per accounting."
+     ],
+     [
+      "403",
+      "Luke Bianco",
+      "Former resident, eviction file, with collections",
+      0,
+      0,
+      0,
+      6935.5,
+      6935.5,
+      ""
+     ]
+    ],
+    "due": 10700,
+    "dueLabel": "October charges not yet paid"
+   },
+   "rent": {
+    "source": "Rent Roll",
+    "inPlace": 59420,
+    "occupiedCount": 16,
+    "avgSuite": 3714,
+    "avgSqft": 3.44,
+    "futureRent": 1585,
+    "note": ""
+   },
+   "concessions": {
+    "source": "Concessions, Sep 2026",
+    "total": 65060,
+    "units": [
+     {
+      "unit": "101",
+      "plan": "The Scholar",
+      "term": "12 months",
+      "total": 3495
+     },
+     {
+      "unit": "103",
+      "plan": "The Legacy",
+      "term": "12 months",
+      "total": 1800
+     },
+     {
+      "unit": "203",
+      "plan": "The Scholar",
+      "term": "12 months",
+      "total": 3595
+     },
+     {
+      "unit": "202",
+      "plan": "The Limestone",
+      "term": "12 months",
+      "total": 1585
+     },
+     {
+      "unit": "205",
+      "plan": "The Legacy",
+      "term": "12 months",
+      "total": 5455
+     },
+     {
+      "unit": "301A",
+      "plan": "The Heritage",
+      "term": "12 months",
+      "total": 3050
+     },
+     {
+      "unit": "302",
+      "plan": "The Concord",
+      "term": "12 months",
+      "total": 6085
+     },
+     {
+      "unit": "303",
+      "plan": "The Scholar",
+      "term": "16 months",
+      "total": 14130
+     },
+     {
+      "unit": "304",
+      "plan": "The Arch",
+      "term": "16 months",
+      "total": 9030
+     },
+     {
+      "unit": "305",
+      "plan": "The Legacy",
+      "term": "12 months",
+      "total": 3660
+     },
+     {
+      "unit": "401",
+      "plan": "The Archive",
+      "term": "12 months",
+      "total": 3675
+     },
+     {
+      "unit": "403",
+      "plan": "The Dean",
+      "term": "12 months",
+      "total": 9500
+     }
+    ],
+    "note": "Totals per lease, rent and parking concessions together."
+   },
+   "budget": {
+    "source": "Income Statement, Budget vs Actual, Sep 2026 (run 2026-10-01)",
+    "period": "Sep 2026",
+    "lines": [
+     [
+      "Rental income",
+      48530,
+      76000,
+      307965,
+      670588.24
+     ],
+     [
+      "Other income",
+      1782,
+      2492.67,
+      11572.54,
+      22434.03
+     ],
+     [
+      "Administration",
+      269.29,
+      1130.23,
+      11909.01,
+      10172.07
+     ],
+     [
+      "Payroll",
+      0,
+      5068.75,
+      0,
+      45618.75
+     ],
+     [
+      "Management fees",
+      0,
+      7288.36,
+      85153.38,
+      65595.24
+     ],
+     [
+      "Advertising and promotion",
+      5736.28,
+      1933.33,
+      51752.65,
+      17399.97
+     ],
+     [
+      "Telecommunications",
+      1179.45,
+      100,
+      8059.17,
+      900
+     ],
+     [
+      "Utilities",
+      1608.9,
+      1012.91,
+      23011.98,
+      9116.19
+     ],
+     [
+      "Outside services",
+      902.06,
+      1344.42,
+      14448.71,
+      14899.78
+     ],
+     [
+      "Contract services",
+      775.05,
+      1534.39,
+      14374.15,
+      13809.51
+     ],
+     [
+      "Repairs and maintenance",
+      4229.27,
+      1307.15,
+      19479.46,
+      11764.35
+     ],
+     [
+      "Turnover costs",
+      2079.98,
+      335.41,
+      24272.22,
+      3018.69
+     ],
+     [
+      "Taxes and insurance",
+      0,
+      8333.34,
+      0,
+      75000.06
+     ]
+    ],
+    "noi": [
+     33531.72,
+     49104.38,
+     67076.81,
+     425727.66
+    ],
+    "annualNoi": 571640.8,
+    "noiMonths": [
+     "2025-10",
+     "2025-11",
+     "2025-12",
+     "2026-01",
+     "2026-02",
+     "2026-03",
+     "2026-04",
+     "2026-05",
+     "2026-06",
+     "2026-07",
+     "2026-08",
+     "2026-09"
+    ],
+    "noiTrend": [
+     14671.94,
+     20571.2,
+     21421.23,
+     15928.47,
+     6311.11,
+     3670.19,
+     42646.15,
+     -73662.17,
+     302.82,
+     16643.81,
+     21704.71,
+     33531.72
+    ],
+    "note": "September was re-run on 2026-10-01 with accounting adjustments: website costs were reclassed and net operating income rose to $33,532. Rental income is below budget as suites filled through the summer. No payroll, taxes or insurance are booked this year, and no management fee was booked in September."
+   },
+   "weeks": [
+    {
+     "week": "2026-03-18",
+     "leads": 3,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-03-25",
+     "leads": 4,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-01",
+     "leads": 6,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-08",
+     "leads": 6,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-15",
+     "leads": 6,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-22",
+     "leads": 3,
+     "tours": 3,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-04-29",
+     "leads": 4,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 0,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-06",
+     "leads": 6,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 5,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-13",
+     "leads": 5,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 5,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-20",
+     "leads": 6,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 5,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-05-27",
+     "leads": 16,
+     "tours": 3,
+     "apps": null,
+     "pending": null,
+     "leased": 12,
+     "avail": 5,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-03",
+     "leads": 30,
+     "tours": 3,
+     "apps": null,
+     "pending": null,
+     "leased": 13,
+     "avail": 4,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-10",
+     "leads": 17,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 14,
+     "avail": 3,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-17",
+     "leads": 12,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 14,
+     "avail": 3,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-06-24",
+     "leads": 8,
+     "tours": 4,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-01",
+     "leads": 11,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-08",
+     "leads": 11,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": null,
+     "wo": 11,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-15",
+     "leads": 15,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": null,
+     "wo": null,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-22",
+     "leads": 12,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": null,
+     "wo": 25,
+     "arrears": null
+    },
+    {
+     "week": "2026-07-29",
+     "leads": 5,
+     "tours": null,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": 17,
+     "wo": 22,
+     "arrears": null
+    },
+    {
+     "week": "2026-08-05",
+     "leads": 16,
+     "tours": 2,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": 17,
+     "wo": 19,
+     "arrears": 11070
+    },
+    {
+     "week": "2026-08-12",
+     "leads": 11,
+     "tours": 0,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": 17,
+     "wo": 18,
+     "arrears": 1670
+    },
+    {
+     "week": "2026-08-19",
+     "leads": 8,
+     "tours": 1,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 2,
+     "pleased": 17,
+     "wo": 19,
+     "arrears": 0
+    },
+    {
+     "week": "2026-08-26",
+     "leads": 5,
+     "tours": 2,
+     "apps": null,
+     "pending": null,
+     "leased": 15,
+     "avail": 1,
+     "pleased": 17,
+     "wo": 19
+    },
+    {
+     "week": "2026-09-02",
+     "leads": 9,
+     "tours": 1,
+     "apps": 1,
+     "pending": 0,
+     "leased": 16,
+     "avail": 1,
+     "pleased": 17,
+     "wo": 13
+    },
+    {
+     "week": "2026-09-09",
+     "leads": 5,
+     "tours": 0,
+     "apps": 0,
+     "pending": 0,
+     "leased": 16,
+     "avail": 2,
+     "pleased": 17,
+     "wo": 11
+    },
+    {
+     "week": "2026-09-16",
+     "leads": 7,
+     "tours": 0,
+     "apps": 0,
+     "pending": 0,
+     "leased": 16,
+     "avail": 3,
+     "pleased": 17,
+     "wo": 14
+    },
+    {
+     "week": "2026-09-30",
+     "leads": 4,
+     "tours": 1,
+     "apps": 1,
+     "pending": 0,
+     "leased": 16,
+     "avail": 1,
+     "pleased": 17,
+     "wo": 6
+    }
+   ],
+   "missedWeeks": [
+    "2026-09-23"
+   ],
+   "waiting": [
+    {
+     "area": "Marketing",
+     "what": "Brand and marketing intake.",
+     "since": "2026-09-01",
+     "last": "2026-09-30: waiting on the Faculty47 and Grove decision."
+    },
+    {
+     "area": "Maintenance",
+     "what": "Storage lockers: confirm the type and supplier.",
+     "since": "2026-09-14",
+     "last": "2026-09-30: Ian to confirm; Uline is likely."
+    }
+   ],
+   "working": [
+    {
+     "area": "Maintenance",
+     "what": "City by-law complaint",
+     "since": "2026-09-02",
+     "notes": [
+      [
+       "2026-09-30",
+       "Waiting on information from Mike. We need it to appeal and ask the City for an extension."
+      ],
+      [
+       "2026-09-16",
+       "No update from the City."
+      ]
+     ]
+    }
+   ],
+   "workOrders": [
+    {
+     "ref": "17441969",
+     "unit": "401",
+     "problem": "Building-wide air conditioning",
+     "status": "Awaiting parts",
+     "created": "2026-06-06",
+     "due": "2026-10-06",
+     "age": 118,
+     "vendor": "",
+     "notes": [
+      [
+       "2026-10-02",
+       "The new fluid cooler is due the week of 2026-10-05; a firm delivery date is still to come. Installation takes two days once it arrives. No permit is expected, as the crane sets up in the private parking lot for a like-for-like replacement. Start-up waits for warmer weather in 2027, as discussed with Ian. Heat is a separate system and is not affected; a commissioning report will follow start-up."
+      ],
+      [
+       "2026-10-01",
+       "Fluid cooler delayed by the manufacturer; KEILTY has asked for the written delay notice and a firm delivery date. Start-up needs the unit filled with water, so the vendor recommends waiting for warmer weather in 2027 (discussed with Ian at City Flats). Heat is a separate system and is not affected; a commissioning report will follow start-up."
+      ],
+      [
+       "2026-09-30",
+       "The manufacturer has delayed the new fluid cooler by two weeks. New ETA is mid October."
+      ],
+      [
+       "2026-09-16",
+       "Vendor pressing to bring delivery forward from the last week of September."
+      ],
+      [
+       "2026-08-19",
+       "Repairs in place are temporary until the new unit arrives."
+      ]
+     ]
+    },
+    {
+     "ref": "17442332",
+     "unit": "",
+     "problem": "Intercom improvements (BMX)",
+     "status": "Suspended",
+     "created": "2026-06-15",
+     "due": "2026-10-02",
+     "age": 109,
+     "vendor": "",
+     "notes": [
+      [
+       "2026-10-01",
+       "Quote 14358."
+      ],
+      [
+       "2026-09-30",
+       "On hold against the quote (ref 14358)."
+      ]
+     ]
+    },
+    {
+     "ref": "17442365",
+     "unit": "",
+     "problem": "Backflow test",
+     "status": "Scheduling trade",
+     "created": "2026-06-16",
+     "due": "2026-10-01",
+     "age": 108,
+     "vendor": "Ainsworth Inc.",
+     "notes": [
+      [
+       "2026-10-01",
+       "Getting quotes for the backflow servicing."
+      ],
+      [
+       "2026-09-30",
+       "Rescheduled to the fall."
+      ]
+     ]
+    },
+    {
+     "ref": "17442893",
+     "unit": "",
+     "problem": "Change HVAC filters in suites (recurring)",
+     "status": "Scheduling trade",
+     "created": "2026-07-01",
+     "due": "2026-10-06",
+     "age": 93,
+     "vendor": "Unrivaled Renovations",
+     "notes": [
+      [
+       "2026-10-01",
+       "Asked Josh for a new date this week."
+      ]
+     ]
+    },
+    {
+     "ref": "17443522",
+     "unit": "302",
+     "problem": "Portable air conditioning",
+     "status": "Awaiting parts",
+     "created": "2026-07-17",
+     "due": "2026-10-01",
+     "age": 77,
+     "vendor": "Coral Services",
+     "notes": [
+      [
+       "2026-10-01",
+       "Call to the resident went to voicemail; no reply by email."
+      ],
+      [
+       "2026-09-16",
+       "Only two current tenants asked for a portable unit; theirs are dispatched. The rest were cancelled and will be reopened on request."
+      ]
+     ]
+    },
+    {
+     "ref": "17444387",
+     "unit": "",
+     "problem": "Confirm elevator inspection (recurring)",
+     "status": "Suspended",
+     "created": "2026-09-02",
+     "due": "2026-11-01",
+     "age": 30,
+     "vendor": "",
+     "notes": [
+      [
+       "2026-10-01",
+       "Follow-up set for 2026-11-01."
+      ]
+     ]
+    },
+    {
+     "ref": "17444642",
+     "unit": "205",
+     "problem": "Bathroom exhaust fan too weak",
+     "status": "Scheduling trade",
+     "created": "2026-09-08",
+     "due": "2026-10-02",
+     "age": 24,
+     "vendor": "Coral Services",
+     "notes": [
+      [
+       "2026-10-01",
+       "Nobody answered for the vendor; called the resident to rebook, went to voicemail."
+      ]
+     ]
+    },
+    {
+     "ref": "17444841",
+     "unit": "",
+     "problem": "Storage lockers, bicycle room",
+     "status": "Open",
+     "created": "2026-09-14",
+     "due": "2026-10-01",
+     "age": 18,
+     "vendor": "",
+     "notes": [
+      [
+       "2026-10-01",
+       "Waiting on the locker measurements."
+      ],
+      [
+       "2026-09-30",
+       "Lockers to go along the back wall of the bicycle room; the janitor's closet is already in use. Waiting on locker dimensions."
+      ]
+     ]
+    },
+    {
+     "ref": "17445203",
+     "unit": "303",
+     "problem": "Dryer not drying",
+     "status": "Scheduling trade",
+     "created": "2026-09-24",
+     "due": "2026-10-02",
+     "age": 8,
+     "vendor": "Dependable Appliances",
+     "notes": [
+      [
+       "2026-10-01",
+       "Follow-up email sent to the vendor."
+      ],
+      [
+       "2026-09-30",
+       "Dryer ran for two hours and left clothes wet. Waiting on the vendor's date."
+      ]
+     ]
+    },
+    {
+     "ref": "17445434",
+     "unit": "201",
+     "problem": "Exterior lights not coming on at dusk",
+     "status": "Scheduling trade",
+     "created": "2026-09-29",
+     "due": "2026-10-05",
+     "age": 3,
+     "vendor": "Unrivaled Renovations",
+     "notes": [
+      [
+       "2026-10-01",
+       "Dispatched, waiting on the vendor."
+      ],
+      [
+       "2026-09-30",
+       "The exterior lights do not turn on at dusk. Vendor informed; reaching the tenant for details."
+      ]
+     ]
+    },
+    {
+     "ref": "17445467",
+     "unit": "",
+     "problem": "Change HVAC filters in suites (recurring)",
+     "status": "Open",
+     "created": "2026-10-01",
+     "due": "2026-10-31",
+     "age": 1,
+     "vendor": "",
+     "notes": []
+    },
+    {
+     "ref": "17445475",
+     "unit": "",
+     "problem": "Confirm fire safety inspection (recurring)",
+     "status": "Open",
+     "created": "2026-10-01",
+     "due": "2026-10-31",
+     "age": 1,
+     "vendor": "",
+     "notes": []
+    },
+    {
+     "ref": "17445481",
+     "unit": "",
+     "problem": "Confirm backflow prevention test (recurring)",
+     "status": "Open",
+     "created": "2026-10-01",
+     "due": "2026-10-31",
+     "age": 1,
+     "vendor": "",
+     "notes": []
+    }
+   ],
+   "checks": [],
+   "missing": [
+    {
+     "sec": "wait",
+     "level": "team",
+     "what": "Client items (Awaiting your input)",
+     "need": "open items owned by the client, logged under the client on the Command Center"
+    },
+    {
+     "sec": "work",
+     "level": "team",
+     "what": "What we are working on",
+     "need": "every open KEILTY item, with its latest update"
+    },
+    {
+     "sec": "leasing",
+     "level": "team",
+     "what": "Tours booked ahead",
+     "need": "upcoming tours with name, date and time; Entrata gives only a count"
+    }
+   ],
+   "items": {
+    "source": "Rentable Items Availability",
+    "list": [
+     [
+      "P1",
+      "Occupied",
+      "403"
+     ],
+     [
+      "P2",
+      "Occupied",
+      "302"
+     ],
+     [
+      "P3",
+      "Occupied",
+      "103"
+     ],
+     [
+      "P4",
+      "Occupied",
+      ""
+     ],
+     [
+      "P5",
+      "Occupied",
+      ""
+     ],
+     [
+      "P6",
+      "Occupied",
+      ""
+     ],
+     [
+      "P7",
+      "Occupied",
+      "205"
+     ],
+     [
+      "P8",
+      "Available",
+      ""
+     ],
+     [
+      "P9",
+      "Occupied",
+      "303"
+     ],
+     [
+      "P10",
+      "Occupied",
+      "305"
+     ],
+     [
+      "P11",
+      "Occupied",
+      ""
+     ],
+     [
+      "P12",
+      "Occupied",
+      ""
+     ],
+     [
+      "P13",
+      "Occupied",
+      ""
+     ],
+     [
+      "P14",
+      "Occupied",
+      ""
+     ],
+     [
+      "P15 (accessible)",
+      "Available",
+      ""
+     ],
+     [
+      "P16 (snow spot)",
+      "Available",
+      ""
+     ],
+     [
+      "P17 (snow spot)",
+      "Available",
+      ""
+     ]
+    ],
+    "occupied": 13,
+    "total": 17,
+    "note": "Listed at $125 a month."
+   },
+   "toursDate": "2026-10-01",
+   "history": [
+    {
+     "date": "2026-09-30",
+     "apps": 0,
+     "leased": 17,
+     "inProgress": 0,
+     "holds": 1,
+     "available": 1,
+     "parking": 13,
+     "wo": 9,
+     "owing": 0,
+     "tours": 1,
+     "leads": 3
+    },
+    {
+     "date": "2026-10-01",
+     "leads": 2,
+     "apps": 0,
+     "leased": 17,
+     "inProgress": 1,
+     "holds": 0,
+     "available": 1,
+     "parking": 13,
+     "wo": 13,
+     "owing": 0,
+     "tours": 0
+    }
+   ],
+   "prospects": [
+    {
+     "name": "Moustafa Salem",
+     "unit": "301C",
+     "status": "Application: Completed",
+     "agent": "Moira Duldulao",
+     "entries": [
+      [
+       "2026-09-30 07:51",
+       "Notes",
+       "Sent the application for review."
+      ],
+      [
+       "2026-09-30 07:20",
+       "Tour",
+       "Completed a tour last Sunday."
+      ]
+     ]
+    }
+   ],
+   "toursBooked": [],
+   "toCapture": []
+  }
+ ],
+ "weeklyChecklist": [
+  [
+   "New leads",
+   "Lease Term Progress, guest cards completed",
+   "done"
+  ],
+  [
+   "Tours held",
+   "Activity Log, previous day, built up day by day",
+   "done"
+  ],
+  [
+   "Pending applications",
+   "Lease Term Progress, application stages",
+   "done"
+  ],
+  [
+   "Pending leases",
+   "Rent Roll, future residents without last month's rent",
+   "done"
+  ],
+  [
+   "Units leased",
+   "Rent Roll",
+   "done"
+  ],
+  [
+   "Units available",
+   "Availability",
+   "done"
+  ],
+  [
+   "Parking stalls leased",
+   "Rentable Items Availability",
+   "done"
+  ],
+  [
+   "Delinquency",
+   "Resident Aged Receivables",
+   "done"
+  ],
+  [
+   "Open work orders",
+   "Work Order Details, current year and prior year reports together, so open orders never drop off at year end",
+   "done"
+  ],
+  [
+   "Work order updates",
+   "Internal Note on Work Order Details (Main package)",
+   "done"
+  ],
+  [
+   "Leasing by name: prospects and their status",
+   "Activity Log notes and tours, previous day",
+   "done"
+  ],
+  [
+   "Tours booked ahead",
+   "Entrata gives the count only; names and times stay with the team on the Command Center",
+   "team"
+  ],
+  [
+   "Lease renewals",
+   "Expiring Leases report",
+   "done"
+  ],
+  [
+   "Waiting on the client",
+   "stays on the Command Center; not an Entrata record",
+   "team"
+  ],
+  [
+   "What we are working on (maintenance, marketing, accounting)",
+   "stays on the Command Center; not an Entrata record",
+   "team"
+  ]
+ ],
+ "dataThrough": "2026-10-01",
+ "rentRollAsOf": "2026-10-02 01:00"
+};
+
+</script>
 <script>
 (function(){
   var F = window.CLIENT_FEED;
@@ -468,14 +4645,20 @@
           L.map(function(x){ return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.unit||"\u2014")+'</td><td>'+esc(x.stage)+'</td><td>'+esc(x.last)+'</td></tr>'; }).join("")+'</tbody></table></div></details></div>';
       });
     }
+    (function(){ var L=0,R=0,rent=0,owed=0,wo=0; F.properties.forEach(function(p){ L+=leasedOf(p); R+=p.rentable; rent+=(p.mode==="leaseup"?(p.rent&&p.rent.signed):(p.rent&&p.rent.inPlace))||0; owed+=(p.arrears&&p.arrears.owing)||0; wo+=(p.workOrders||[]).length; });
+      h+='<div class="kpis" style="margin-top:16px">'+
+        '<div class="kpi"><div class="v">'+L+' of '+R+'</div><div class="k">Suites leased</div><div class="d">'+p1(L,R).toFixed(1)+'% across the portfolio</div></div>'+
+        '<div class="kpi"><div class="v">'+m0(rent)+'</div><div class="k">Rent on leased suites</div><div class="d">a month, before parking</div></div>'+
+        '<div class="kpi"><div class="v">'+m0(owed)+'</div><div class="k">Owed by residents</div><div class="d">current residents, today</div></div>'+
+        '<div class="kpi"><div class="v">'+wo+'</div><div class="k">Open work orders</div><div class="d">all properties</div></div></div>'; })();
     h+=sh("ov-props","Properties","select one to see its full detail")+'<div class="ov">';
     F.properties.forEach(function(p){
       var c=p.counts, L=leasedOf(p), lp=p1(L,p.rentable);
       h+='<div class="ovc"><h3>'+esc(p.name)+'</h3><div class="meta">'+esc(p.address)+' · '+esc(p.entity)+'</div>'+
         '<div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><b style="font-size:22px">'+lp.toFixed(1)+'% leased</b><span class="dim" style="font-size:13px">'+L+' of '+p.rentable+' rentable</span></div><div class="lbar"><i style="width:'+lp+'%"></i></div></div><dl>'+
         (p.mode==="leaseup"?'<dt>Leases in progress</dt><dd>'+c.inProgress+'</dd>':'<dt>Occupied</dt><dd>'+c.occupied+'</dd>')+
-        '<dt>Available</dt><dd>'+c.available+'</dd><dt>New leads (guest cards)</dt><dd>'+((p.history||[]).slice(-1)[0]||{}).leads+'</dd>'+
-        '<dt>Owed by residents</dt><dd>'+money(p.arrears.owing)+'</dd><dt>Awaiting your input</dt><dd>'+p.waiting.length+'</dd></dl>'+
+        '<dt>Available</dt><dd>'+c.available+'</dd><dt>New leads</dt><dd>'+((p.history||[]).slice(-1)[0]||{}).leads+'</dd>'+
+        '<dt>Owed by residents</dt><dd>'+money(p.arrears.owing)+'</dd><dt>Open work orders</dt><dd>'+(p.workOrders||[]).length+'</dd><dt>Awaiting your input</dt><dd>'+p.waiting.length+'</dd></dl>'+
         '<div class="srcline">'+chip("E","Availability, Rent Roll, Lease Term Progress, Receivables")+chip("C","open items")+'</div>'+
         '<button class="go" data-v="'+p.id+'">View '+esc(p.name)+' in detail</button></div>';
     });
@@ -483,6 +4666,13 @@
     var all=[]; F.properties.forEach(function(p){ p.waiting.forEach(function(x){ all.push([p,x]); }); });
     all.sort(function(a,b){ return a[1].since<b[1].since?-1:1; });
     h+=sh("ov-wait","Awaiting your input","across the portfolio "+chip("C","open items"))+waitBlock(all.map(function(r){ return {area:r[1].area,what:r[1].what,since:r[1].since,last:r[1].last,prop:r[0].name}; }));
+    /* Portfolio trends: every property's weekly rows added together, drawn with the same four cards. */
+    (function(){ var W={}, Hh={}, num=["leads","tours","leased","pending","apps","avail","pleased","wo","arrears"], hn=["leads","tours","leased","inProgress","apps","available","parking","wo","owing"];
+      F.properties.forEach(function(p){ (p.weeks||[]).forEach(function(w){ var o=W[w.week]=W[w.week]||{week:w.week}; num.forEach(function(k){ if(w[k]!=null) o[k]=(o[k]||0)+w[k]; }); });
+        (p.history||[]).forEach(function(x){ var o=Hh[x.date]=Hh[x.date]||{date:x.date}; hn.forEach(function(k){ if(x[k]!=null) o[k]=(o[k]||0)+x[k]; }); }); });
+      var pp={id:"portfolio",mode:"portfolio",rentable:F.properties.reduce(function(a,p){return a+p.rentable;},0),
+        weeks:Object.keys(W).sort().map(function(k){return W[k];}),history:Object.keys(Hh).sort().map(function(k){return Hh[k];})};
+      var t=trendsBlock(pp); if(t) h+=t.replace('id="sec-trends"','id="ov-trends"').replace('<h2>Trends</h2>','<h2>Portfolio trends</h2>'); })();
     return h;
   }
   function waitBlock(rows){
@@ -564,7 +4754,7 @@
       if(d&&d.movein) r.push(["Move-in",String(d.movein).slice(0,10)]);
       else if(u[4]&&s[2]!=="occupied") r.push(["Available on",u[4]]);
       return '<b class="h">Suite '+esc(s[0])+'</b><span class="st" style="background:'+c[1]+';color:'+c[2]+(s[2]==="available"?';border:1px solid var(--line)':'')+'">'+esc(c[0])+'</span>'+r.map(function(x){ return '<div class="r"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>'; }).join(""); }
-    var h='<div class="card" style="margin-top:12px"><div class="ch"><span class="t">Every suite, by floor <span class="stkhint">\u00b7 hover or tap a suite for its details</span></span>'+use("Every suite, by floor","E","Availability, Rent Roll, Receivables")+'</div><div class="stk">';
+    var h='<div class="card" style="margin-top:12px"><div class="ch"><span class="t">Every suite <span class="stkhint">\u00b7 hover or tap a suite for its details</span></span>'+use("Every suite, by floor","E","Availability, Rent Roll, Receivables")+'</div><div class="stk">';
     floors.forEach(function(f){ h+='<div class="sfl"><span class="sfn">'+f+'</span><div class="sru" style="grid-template-columns:repeat('+mx+',minmax(0,1fr))">'+
       fl[f].map(function(s){ var c=ST[s[2]], bs=bedShort(BEDS[s[1]]); return '<span class="su su-'+s[2]+'" tabindex="0" role="button" aria-label="'+esc("Suite "+s[0]+", "+(bs?bs+", ":"")+s[1]+": "+c[0])+'" data-tip="'+esc(tip(s,c))+'" style="background:'+c[1]+';color:'+c[2]+'">'+esc(s[0].slice(1))+(bs?'<span class="bd">'+esc(bs)+'</span>':'')+'</span>'; }).join("")+'</div></div>'; });
     h+='</div><div class="skey">'+["occupied","leased","progress","applied","available","model"].filter(function(k){return cnt[k];}).map(function(k){ return '<span><i class="su-'+k+'" style="background:'+ST[k][1]+'"></i>'+ST[k][0]+' <b>'+cnt[k]+'</b></span>'; }).join("")+'</div>'+
@@ -609,7 +4799,9 @@
   function leaseupBlock(p){
     var c=p.counts, cv=curve(p), rem=p.rentable-c.leased;
     return sh("sec-lu","Lease-up",c.leased+" of "+p.rentable+" rentable suites leased")+'<div class="card"><div class="ch"><span class="t">Leased suites against the target</span>'+use("Lease-up","C","weekly update")+use("Lease-up","E","Rent Roll")+'</div>'+
-      '<div class="lu-top"><span class="big">'+c.leased+' of '+p.rentable+' leased, '+p1(c.leased,p.rentable).toFixed(1)+'%</span><span class="tg">Target: full by '+esc(p.target)+' (management agreement), '+Math.round(cv.toGo)+' weeks away</span></div>'+
+      '<div class="lu-top"><span class="big">'+c.leased+' of '+p.rentable+' leased, '+p1(c.leased,p.rentable).toFixed(1)+'%</span><span class="tg">Target: full by '+esc(p.target)+(p.targetSource?' ('+esc(p.targetSource)+')':'')+', '+Math.round(cv.toGo)+' weeks away</span></div>'+(function(){ var lp=p1(c.leased,p.rentable), past=p.target&&p.target<F.dataThrough;
+        /* the reminder: once a lease-up building is 95% leased or past its target date, the section says so, so nobody forgets to move it to the standard layout */
+        return (lp>=95||past)?'<div class="note" style="margin:12px 16px 0;border-left:4px solid var(--amber);border-radius:0">'+(lp>=95?'<b>Lease-up target reached:</b> '+c.leased+' of '+p.rentable+' suites leased.':'<b>Target date passed:</b> '+esc(p.target)+', with '+c.leased+' of '+p.rentable+' suites leased.')+'</div>':''; })()+
       '<div class="chart">'+cv.svg+'</div><div class="key"><span><i></i>Leased to date</span><span class="k2"><i></i>Straight line to full</span><span class="k4"><i></i>Pace since '+esc(cv.from[0])+'</span></div>'+
       '<div class="paces"><div><div class="v">'+r1(rem/cv.toGo)+'</div><div class="k">Needed per week</div><div class="m">'+rem+' suites in '+Math.round(cv.toGo)+' weeks</div></div>'+
       '<div><div class="v">'+r1(cv.pace)+'</div><div class="k">Actual per week</div><div class="m">since '+esc(cv.from[0])+'</div></div>'+
@@ -646,7 +4838,7 @@
     var n=months.length, L=n-1, G="var(--green-ink)", G2="#8DB59C", AM="var(--amber)", RD="var(--red)";
     var srcs=chip("E","daily package")+chip("C","weekly updates before 2026-09-30");
     USED.push(["Trend","E","daily package, rolled up by week"],["Trend","C","weekly updates before 2026-09-30"]);
-    var h=sh("sec-trends","Trend","month by month, "+esc(months[0])+" to "+esc(months[L])+"")+'<div class="tg">';
+    var h=sh("sec-trends","Trends","month by month, "+esc(months[0])+" to "+esc(months[L])+"")+'<div class="tg">';
     h+=tcard("Leasing",(pv[L]==null?"—":pv[L]+"%"),tchart({title:"Leased by month",labels:months,series:[{kind:"bar",vals:leased,col:G},{kind:"line",vals:pv,col:AM,axis:"r"}],rmax:100}),[["Leased, month end",G],["Leased % of "+p.rentable,AM,1]],(leased[L]!=null?leased[L]+" of "+p.rentable+" at the latest week.":""),srcs);
     h+=tcard("Demand",(leads[L]==null?"—":leads[L]+" leads"),tchart({title:"Leads and tours",labels:months,series:[{kind:"bar",vals:leads,col:G},{kind:"bar",vals:tours,col:G2}]}),[["New leads",G],["Tours held",G2]],"Summed by month.",srcs);
     h+=tcard("Availability and work",(avail[L]==null?"—":avail[L]+" available"),tchart({title:"Available and work orders",labels:months,series:[{kind:"bar",vals:avail,col:G2},{kind:"line",vals:wo,col:RD}]}),[["Available, month end",G2],["Open work orders",RD,1]],"",srcs);
@@ -668,14 +4860,22 @@
     var St=p.funnel.stages, top=Math.max.apply(null,St.map(function(s){return s[1];}))||1;
     var t=(p.toursBooked||[]).filter(function(l){ return l.tour.slice(0,10)>=TODAY; }).sort(function(a,b){ return a.tour.localeCompare(b.tour); });
     return sh("sec-leasing","Leasing")+'<div class="g2"><div class="card"><div class="ch"><span class="t">Where every lead stands</span>'+use("Leasing","E",p.funnel.source)+'</div><div class="fun">'+
+      /* the four stages every KEILTY dashboard shows, then Entrata's own stages behind a toggle */
+      (function(){ var n=function(i){ return (St[i]||[])[1]||0; }, four=[["Leads",n(0)],["Applications",n(1)+n(2)+n(3)+n(4)],["Leases in progress",n(5)+n(6)+n(7)],["Leases signed",n(8)]], t4=Math.max.apply(null,four.map(function(x){return x[1];}).concat([1]));
+        return four.map(function(s){ return '<div class="fs"><div class="n">'+esc(s[0])+'</div><div class="c">'+s[1]+'</div><div class="w"></div><div class="b"><i style="width:'+Math.round(s[1]/t4*100)+'%"></i></div></div>'; }).join(""); })()+
+      '</div><details class="wk"><summary>Show every stage ('+St.length+')</summary><div class="fun">'+
       St.map(function(s){ return '<div class="fs"><div class="n">'+esc(s[0])+'</div><div class="c">'+s[1]+'</div><div class="w">'+(s[2]&&s[1]?'Average time in this stage: '+dhm(s[2]):'')+'</div><div class="b"><i style="width:'+Math.round(s[1]/top*100)+'%"></i></div></div>'; }).join("")+
-      '</div><div class="conv"><span><b>'+p.funnel.total+'</b> leads in total</span>'+(p.funnel.total?'<span>average of '+dhm(p.funnel.avgTotal)+' from guest card to lease</span>':'')+'</div></div>'+
+      '</div></details><div class="conv"><span><b>'+p.funnel.total+'</b> leads in total</span>'+(p.funnel.total?'<span>average of '+dhm(p.funnel.avgTotal)+' from guest card to lease</span>':'')+'</div></div>'+
       '<div class="card"><div class="ch"><span class="t">Coming up</span></div>'+
       '<div class="cu-h">Tours booked <b>'+t.length+'</b> '+use("Leasing","C","tours booked")+'</div>'+(t.length? t.map(function(l){ var d=daysBetween(TODAY,l.tour), dd=day(l.tour).toLocaleDateString("en-CA",{weekday:"short"});
         return '<div class="tour"><span class="d1">'+esc(l.tour.slice(0,10))+'</span><span class="d2">'+esc(dd+" "+l.tour.slice(11))+'</span><span>'+esc(l.name)+'</span><span class="rel">'+(d===0?"today":d===1?"tomorrow":"in "+d+" days")+'</span></div>'; }).join("") : '<div class="empty">No tours booked ahead.</div>')+
       '<div class="cu-h">'+(p.mode==="leaseup"?"Leases in progress":"Moving in")+' <b>'+p.deals.length+'</b> '+use("Leasing","E","Rent Roll")+'</div>'+
       '<div class="sc"><table><thead><tr><th>Suite</th><th>Plan</th><th class="num">Rent</th><th class="num">Move in</th></tr></thead><tbody>'+
-      p.deals.map(function(d){ return '<tr><td><b>'+esc(d.unit)+'</b></td><td>'+esc(d.plan)+'</td><td class="num">'+(d.rent?m0(d.rent):'<span class="dim">$0</span>')+'</td><td class="num">'+esc(d.movein)+'</td></tr>'; }).join("")+'</tbody></table></div></div></div>';
+      p.deals.map(function(d){ return '<tr><td><b>'+esc(d.unit)+'</b></td><td>'+esc(d.plan)+'</td><td class="num">'+(d.rent?m0(d.rent):'<span class="dim">$0</span>')+'</td><td class="num">'+esc(d.movein)+'</td></tr>'; }).join("")+'</tbody></table></div>'+
+      (function(){ var av=((p.inventory||{}).units||[]).filter(function(u){ return u[5]==="Available"; });
+        return '<div class="cu-h">Vacant or on notice <b>'+av.length+'</b></div>'+(!av.length?'<div class="empty">Every suite is let.</div>':
+          av.length<=6? av.map(function(u){ return '<div class="cu-r"><span>Suite '+esc(u[0])+' \u00b7 '+esc(u[1])+'</span><span>Available'+(u[4]?' from '+esc(u[4]):'')+'. '+m0(u[3])+' a month.</span></div>'; }).join("")
+          : '<div class="cu-r"><span>'+av.length+' suites</span><span>Every one is listed under Inventory.</span></div>'); })()+'</div></div>';
   }
 
   /* ---------- prospects: built from the Entrata Activity Log, entry by entry ---------- */
@@ -702,16 +4902,16 @@
     function row(u){ return '<tr><td><b>'+esc(u[0])+'</b></td><td>'+esc(u[0].charAt(0))+'</td><td>'+esc(u[1])+'</td><td class="num">'+Math.round(u[2])+'</td><td class="num">'+m0(u[3])+'</td><td class="num">$'+(u[3]/u[2]).toFixed(2)+'</td>'+(hasD?'<td class="num">'+esc(u[4])+'</td>':''); }
     var head='<thead><tr><th>Suite</th><th>Floor</th><th>Plan</th><th class="num">Sq ft</th><th class="num">Budgeted rent</th><th class="num">Per sq ft</th>'+(hasD?'<th class="num">Available on</th>':'');
     var tot=av.reduce(function(a,u){ return a+u[3]; },0);
-    return sh("sec-inv","Available inventory",av.length+" available")+'<div class="card"><div class="ch"><span class="t">'+av.length+' available suite'+(av.length===1?'':'s')+', '+m0(tot)+' a month at budget</span>'+use("Available inventory","E",I.source)+'</div>'+
+    return sh("sec-inv","Inventory",av.length+" available")+'<div class="card"><div class="ch"><span class="t">'+av.length+' available suite'+(av.length===1?'':'s')+', '+m0(tot)+' a month</span>'+use("Available inventory","E",I.source)+'</div>'+
       '<details class="wk" style="border-top:0"><summary>Show the available suites ('+av.length+')</summary><div class="sc"><table>'+head+'</tr></thead><tbody>'+av.map(function(u){ return row(u)+'</tr>'; }).join("")+
       '<tr class="now"><td>Total</td><td></td><td></td><td></td><td class="num">'+m0(tot)+'</td><td></td>'+(hasD?'<td></td>':'')+'</tr></tbody></table></div></details>'+
       '<details class="wk"><summary>Show every suite, with its status ('+U.length+')</summary><div class="sc"><table>'+head+'<th>Status</th></tr></thead><tbody>'+
         U.map(function(u){ return row(u)+'<td>'+esc(u[5])+'</td></tr>'; }).join("")+'</tbody></table></div></details>'+
-      (p.rentableNote?'<div class="foot">'+esc(p.rentableNote)+'.</div>':'')+'</div>';
+      '<div class="foot">At budgeted rent.'+(p.rentableNote?' '+esc(p.rentableNote)+'.':'')+'</div></div>';
   }
 
   function itemsBlock(p){
-    var h=sh("sec-items","Rentable items","parking, storage and their concessions");
+    var h=sh("sec-items","Rentable items","parking and storage");
     if(!p.items) return h+flags(p,"items");
     var R=p.items;
     return h+'<div class="card"><div class="ch"><span class="t">Parking: '+R.occupied+' of '+R.total+' stalls '+(p.mode==="leaseup"?'reserved':'leased')+'</span>'+use("Rentable items","E",R.source)+'</div><details class="wk" style="border-top:0"><summary>Show every stall ('+R.total+')</summary><div class="stk"><div class="sru" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr))">'+
@@ -720,15 +4920,30 @@
   }
 
   function renewBlock(p){
-    var R=p.renewals;
-    return sh("sec-ren","Renewals")+'<div class="card"><div class="ch"><span class="t">'+(R.expiring120?R.expiring120+' leases expiring':'No leases expiring')+'</span>'+use("Renewals","E",R.source)+'</div><div class="kvr"><span>Leases expiring in the next four months</span><b>'+R.expiring120+'</b></div>'+
-      (R.byEnd?R.byEnd.map(function(x){ return '<div class="kvr"><span>Ending '+esc(x[0])+'</span><b>'+x[1]+'</b></div>'; }).join(""):'<div class="kvr"><span>First lease end</span><b>'+esc(R.firstEnd)+'</b></div>')+
-      '<div class="foot">'+esc(R.note)+'</div></div><div style="margin-top:10px">'+flags(p,"ren")+'</div>';
+    var R=p.renewals||{}, by=(R.byEnd||[]), mx=Math.max.apply(null,by.map(function(x){return x[1];}).concat([1]));
+    var h=sh("sec-ren","Renewals","and rent increases");
+    h+='<div class="g2"><div class="card"><div class="ch"><span class="t">Leases ending in the next 12 months</span></div>'+(by.length?'<div style="padding:10px 16px 6px;display:grid;gap:7px">'+
+      by.map(function(x){ return '<div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;gap:10px;align-items:center;font-size:13px"><span>'+esc(x[0])+'</span><span class="lbar"><i style="width:'+Math.round(x[1]/mx*100)+'%"></i></span><b class="num">'+x[1]+'</b></div>'; }).join("")+'</div>'
+      :'<div class="empty">No leases end in the next 12 months.'+(R.firstEnd?' The first lease ends '+esc(R.firstEnd)+'.':'')+'</div>')+(R.note?'<div class="foot">'+esc(R.note)+'</div>':'')+'</div>';
+    h+='<div class="card"><div class="ch"><span class="t">Ending soon</span></div>'+(R.expiring120?'<div class="kvr"><span>Leases ending in the next four months</span><b>'+R.expiring120+'</b></div>':'<div class="empty">No leases end in the next five months.</div>')+'</div></div>';
+    return h;
   }
 
+
+
+  /* rent increases, the shared layout: one row per lease grouped by the month its notice is due */
+  function increasesBlock(p){
+    var I=p.increases; if(!I||!I.length) return '<div class="card" style="margin-top:12px"><div class="ch"><span class="t">Rent increases</span></div><div class="empty">No rent increases are due yet.</div></div>';
+    var groups={}, order=[]; I.forEach(function(x){ var k=x.noticeBy.slice(0,7); if(!groups[k]){ groups[k]=[]; order.push(k); } groups[k].push(x); }); order.sort();
+    function mname(m){ return ["January","February","March","April","May","June","July","August","September","October","November","December"][+m.slice(5,7)-1]+" "+m.slice(0,4); }
+    return '<div class="card" style="margin-top:12px"><div class="ch"><span class="t">Rent increases</span></div>'+order.map(function(k,i){ var G=groups[k];
+      return '<details class="wk"'+(i===0?' open':'')+'><summary>Notices to serve in '+esc(mname(k))+' <span class="dim" style="font-weight:normal">('+G.length+')</span></summary>'+G.map(function(x){
+        return '<div class="inc"><span class="u">Suite '+esc(x.num)+'</span><span>'+money(x.rent)+' <span class="dim">→</span> <b>'+(x.newRent?money(x.newRent):'—')+'</b></span><span class="dim">from '+esc(x.earliest)+'</span><span class="dim">notice by <b>'+esc(x.noticeBy)+'</b></span></div>'; }).join("")+'</details>'; }).join("")+
+      '<div class="foot">Ontario allows one increase every 12 months, with 90 days’ written notice, up to the yearly guideline. The new rent shown is the guideline increase. The earliest date is 12 months after the rent last changed.</div></div>';
+  }
   function woBlock(p){
     var W=p.workOrders.slice().sort(function(a,b){ return b.age-a.age; });
-    var h=sh("sec-wo","Work orders")+flags(p,"wo");
+    var h=sh("sec-wo","Work orders","oldest first")+flags(p,"wo");
     h+='<div class="card" style="margin-top:10px"><div class="ch"><span class="t">'+W.length+' open</span>'+use("Work orders","E","Work Order Details, with Internal Note")+'</div>';
     if(!W.length) return h+'<div class="empty">No open work orders.</div></div>';
     return h+W.map(function(w){ var n=w.notes[0], late=w.due&&w.due<TODAY, cls=/awaiting/i.test(w.status)?"a":/suspend/i.test(w.status)?"":"g";
@@ -744,11 +4959,21 @@
     var tbl=D.length? '<div class="sc"><table><thead><tr><th>Suite</th><th>Who owes it</th><th>Status</th><th class="num">0 to 30</th><th class="num">31 to 60</th><th class="num">61 to 90</th><th class="num">90+</th><th class="num">Balance</th><th>Comment</th></tr></thead><tbody>'+
       D.map(function(r){ var coll=/collections/i.test(r[2]);
         return '<tr><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+(coll?'<span class="pill r">'+esc(r[2])+'</span>':esc(r[2]))+'</td><td class="num">'+m2(r[3])+'</td><td class="num">'+m2(r[4])+'</td><td class="num">'+m2(r[5])+'</td><td class="num">'+m2(r[6])+'</td><td class="num b" style="color:var(--red)">'+money(r[7])+'</td><td>'+(r[8]?esc(r[8]):'<span class="dim">\u2014</span>')+'</td></tr>'; }).join("")+'</tbody></table></div>' : '';
-    return sh("sec-arr","Arrears")+'<div class="card"><div class="ch"><span class="t">Balances owing today</span>'+use("Arrears","E",A.source)+'</div><div class="money" style="padding:14px 16px">'+
-      '<div class="kpi"><div class="v '+(A.owing>0?"bad":"ok")+'">'+money(A.owing)+'</div><div class="k">Owed by current residents</div></div>'+
-      (A.due?'<div class="kpi"><div class="v">'+money(A.due)+'</div><div class="k">'+esc(A.dueLabel||"Due this month")+'</div><div class="d">0 to 30 days, not yet late</div></div>':'')+
-      (A.formerCount?'<div class="kpi"><div class="v bad">'+money(A.former)+'</div><div class="k">Owed by former residents</div><div class="d">'+A.formerCount+' moved out</div></div>':'')+
-      '</div><div class="foot">'+esc(A.note)+'</div>'+(D.length?'<details class="wk"><summary>Show who owes what ('+D.length+')</summary>'+tbl+'</details>':'')+'</div>';
+    return sh("sec-arr","Arrears","balances owing only")+'<div class="card"><div class="ch"><span class="t">Balances owing today</span>'+use("Arrears","E",A.source)+'</div><div class="money" style="padding:14px 16px">'+
+      '<div class="kpi"><div class="v '+(A.owing>0?"bad":"ok")+'">'+money(A.owing)+'</div><div class="k">Overdue</div><div class="d">current residents, older than this month</div></div>'+
+      '<div class="kpi"><div class="v">'+money(A.due||0)+'</div><div class="k">'+esc(new Date(F.dataThrough+"T00:00:00").toLocaleDateString("en-CA",{month:"long",year:"numeric"}))+' not yet paid</div><div class="d">this month\u2019s charges</div></div>'+
+      '<div class="kpi"><div class="v'+(A.former?" bad":"")+'">'+money(A.former||0)+'</div><div class="k">Former residents</div><div class="d">'+(A.formerCount?A.formerCount+' former lease'+(A.formerCount===1?'':'s'):'nothing owed')+'</div></div>'+
+      '</div><div class="foot">'+esc(A.note)+'</div>'+(function(){
+        /* Same layout as every KEILTY dashboard: current balances first, then former residents with their collections status. Both open. */
+        var cur=D.filter(function(r){ return !/^former/i.test(r[2]); }), fmr=D.filter(function(r){ return /^former/i.test(r[2]); });
+        function rowsTbl(L){ return '<div class="sc"><table><thead><tr><th>Who owes it</th><th>Suite</th><th>Status</th><th class="num">0 to 30</th><th class="num">31 to 60</th><th class="num">61 to 90</th><th class="num">90+</th><th class="num">Balance</th><th>Comment</th></tr></thead><tbody>'+
+          L.map(function(r){ return '<tr><td><b>'+esc(r[1])+'</b></td><td>'+esc(r[0])+'</td><td>'+esc(r[2].replace(/,? ?with collections/i,""))+'</td><td class="num">'+m2(r[3])+'</td><td class="num">'+m2(r[4])+'</td><td class="num">'+m2(r[5])+'</td><td class="num">'+m2(r[6])+'</td><td class="num b" style="color:var(--red)">'+money(r[7])+'</td><td>'+(r[8]?esc(r[8]):'<span class="dim">\u2014</span>')+'</td></tr>'; }).join("")+'</tbody></table></div>'; }
+        var out=cur.length?'<details class="wk" open><summary>Who owes what ('+cur.length+')</summary>'+rowsTbl(cur)+'</details>':'';
+        if(fmr.length){ var sent=fmr.filter(function(r){ return /collections/i.test(r[2]); }).length;
+          out+='<details class="wk" open><summary>Former residents ('+fmr.length+') \u00b7 '+sent+' sent to collections</summary><div class="sc"><table><thead><tr><th>Who owes it</th><th>Suite</th><th class="num">Balance</th><th>Collections</th><th>Comment</th></tr></thead><tbody>'+
+            fmr.map(function(r){ return '<tr><td><b>'+esc(r[1])+'</b></td><td>'+esc(r[0])+'</td><td class="num">'+money(r[7])+'</td><td>'+(/collections/i.test(r[2])?'<span class="tag a">Sent to collections</span>':'<span class="tag">Not sent to collections</span>')+'</td><td>'+(r[8]?esc(r[8]):'<span class="dim">\u2014</span>')+'</td></tr>'; }).join("")+
+            '<tr class="now"><td>Total</td><td></td><td class="num">'+money(fmr.reduce(function(x,r){return x+r[7];},0))+'</td><td></td><td></td></tr></tbody></table></div></details>'; }
+        return out; })()+'<div class="foot">Credits and prepayments are not shown. Ageing is by charge date.</div></div>';
   }
 
   function workingBlock(p){
@@ -758,6 +4983,7 @@
         '<ul class="hist">'+x.notes.map(function(y){ return '<li><span class="dt">'+esc(y[0])+'</span><span>'+esc(y[1])+'</span></li>'; }).join("")+'</ul></details>'; }).join("") : '<div class="empty">Nothing open.</div>')+'</div>';
   }
 
+  function fullMonth(x){ return String(x||"").replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\.?/,function(m){ return {Jan:"January",Feb:"February",Mar:"March",Apr:"April",May:"May",Jun:"June",Jul:"July",Aug:"August",Sep:"September",Oct:"October",Nov:"November",Dec:"December"}[m.slice(0,3)]; }); }
   function finBlock(p){
     function kv(k,x){ return '<div class="kvr"><span>'+k+'</span><b>'+x+'</b></div>'; }
     function sm(x){ return '<small style="display:block;font-size:11px;font-weight:normal;color:var(--muted)">'+x+'</small>'; }
@@ -773,21 +4999,21 @@
         kv("Future resident rent, per month",m0(R.futureRent))+kv("Unrented at budget, per month",m0(p.inventory.unleasedMonthly))+'<div class="fnote">'+esc(R.note)+' '+use("Financial performance","E","Rent Roll, Availability")+'</div></details>';
     }
     var CU=C.units||[], ctot=CU.reduce(function(a,u){ return a+(u.total!=null?u.total:(u.recurring||0)+(u.oneTime||0)); },0);
-    h+='<details class="fin"><summary><span class="ft">Concessions<small>Total concessions entered on each lease, rent and parking together.</small></span><span class="fv">'+m0(C.total!=null?C.total:ctot)+sm("on "+CU.length+" lease"+(CU.length===1?"":"s"))+'</span></summary>'+
+    h+='<details class="fin"><summary><span class="ft">Concessions<small>Concessions given on leases this year.</small></span><span class="fv">'+m0(C.total!=null?C.total:ctot)+sm("on "+CU.length+" lease"+(CU.length===1?"":"s"))+'</span></summary>'+
       (CU.length?'<div class="sc"><table><thead><tr><th>Suite</th><th>Plan</th><th>Lease</th><th class="num">Total concessions</th></tr></thead><tbody>'+
       CU.map(function(u){ var t=u.total!=null?u.total:(u.recurring||0)+(u.oneTime||0); return '<tr><td><b>'+esc(u.unit)+'</b></td><td>'+esc(u.plan||"")+'</td><td>'+esc(u.term||"")+'</td><td class="num">'+m0(t)+'</td></tr>'; }).join("")+
       '<tr class="now"><td>Total</td><td></td><td></td><td class="num">'+m0(C.total!=null?C.total:ctot)+'</td></tr></tbody></table></div>':'<div class="empty">No concessions on the report.</div>')+
       '<div class="fnote">'+(C.note?esc(C.note)+' ':'')+use("Financial performance","E",C.source)+'</div></details>';
     var fav=B.noi[2]-B.noi[3];
-    h+='<details class="fin"><summary><span class="ft">Budget and net operating income<small>Income and operating costs against budget, '+esc(B.period)+' and year to date.</small></span><span class="fv">'+m0(B.noi[0])+sm("net operating income, "+esc(B.period))+'</span></summary>'+
+    h+='<details class="fin"><summary><span class="ft">Budget and net operating income<small>Income and operating costs against budget for '+esc(fullMonth(B.period))+', the last full month, and year to date.</small></span><span class="fv">'+m0(B.noi[0])+sm("net operating income, "+esc(B.period)+" (month closed)")+'</span></summary>'+
       '<div class="sc"><table><thead><tr><th></th><th class="num">'+esc(B.period)+'</th><th class="num">Budget</th><th class="num">Year to date</th><th class="num">Budget</th></tr></thead><tbody>'+
       B.lines.map(function(l){ return '<tr><td>'+esc(l[0])+'</td><td class="num">'+m0(l[1])+'</td><td class="num dim">'+m0(l[2])+'</td><td class="num">'+m0(l[3])+'</td><td class="num dim">'+m0(l[4])+'</td></tr>'; }).join("")+
       '<tr class="now"><td>Net operating income</td><td class="num">'+m0(B.noi[0])+'</td><td class="num">'+m0(B.noi[1])+'</td><td class="num">'+m0(B.noi[2])+'</td><td class="num">'+m0(B.noi[3])+'</td></tr></tbody></table></div>'+
-      '<div class="fnote">Year to date is <b style="color:var(--'+(fav>=0?'good':'red')+')">'+m0(Math.abs(fav))+' '+(fav>=0?'better':'worse')+' than budget</b>. Full year budget: '+m0(B.annualNoi)+'. '+esc(B.note)+'</div>'+
+      '<div class="fnote">Year to date is <b style="color:var(--'+(fav>=0?'good':'red')+')">'+m0(Math.abs(fav))+' '+(fav>=0?'better':'worse')+' than budget</b>. Full year budget: '+m0(B.annualNoi)+'. '+esc(B.note)+' Closed months only; the next month is added once it closes.</div>'+
       '<div class="tc" style="border:0">'+tchart({title:"Net operating income by month",labels:B.noiMonths,series:[{kind:"bar",vals:B.noiTrend,col:"var(--green-ink)"}],allowNeg:B.noiTrend.some(function(v){return v<0;}),negCol:"var(--red)",fmt:function(v){ return (v<0?"-":"")+"$"+Math.round(Math.abs(v)/1000)+"k"; }})+
       '<div class="lg"><span><i style="background:var(--green-ink)"></i>Net operating income</span><span><i style="background:var(--red)"></i>Operating loss</span></div></div>'+
       '<div class="fnote">'+use("Financial performance","E",B.source+"; Trailing 12")+'</div></details>';
-    return sh("sec-fin","Financial performance","open a panel for detail")+h;
+    return sh("sec-fin","Financials","through "+esc(fullMonth(B.period))+", the last full month")+h;
   }
 
   function sourceMap(p){
@@ -803,14 +5029,14 @@
   function property(p){
     USED=[];
     var J=[["sec-week","This week"],["sec-wait","Awaiting your input"]]; if(p.mode==="leaseup") J.push(["sec-lu","Lease-up"]);
-    J=J.concat([["sec-trends","Trend"],["sec-leasing","Leasing"],["sec-leads","Prospects"],["sec-inv","Inventory"],["sec-items","Rentable items"],["sec-ren","Renewals"],["sec-wo","Work orders"],["sec-arr","Arrears"],["sec-work","Working on"],["sec-fin","Financials"]]); J.forEach(function(x){}); 
+    J=J.concat([["sec-trends","Trends"],["sec-leasing","Leasing"],["sec-leads","Prospects"],["sec-inv","Inventory"],["sec-items","Rentable items"],["sec-ren","Renewals"],["sec-wo","Work orders"],["sec-arr","Arrears"],["sec-work","Working on"],["sec-fin","Financials"]]); J.forEach(function(x){}); 
     var h='<div class="phead"><h2>'+esc(p.name)+'</h2><span class="meta">'+esc(p.address)+' · '+esc(p.entity)+'</span></div>';
     h+='<div class="jump">'+J.map(function(j){ var lv=(p.missing||[]).filter(function(x){ return "sec-"+x.sec===j[0]; }).map(function(x){return x.level;}); return '<button data-jump="'+j[0]+'"'+(false&&lv.length?' class="'+(lv.indexOf("missing")>=0?"hasmiss":"hasfix")+'"':'')+'>'+j[1]+'</button>'; }).join("")+'</div>';
     h+=tracker([[p.name,p.missing||[]]]);
     h+=weekBlock(p);
     h+=sh("sec-wait","Awaiting your input",use("Awaiting your input","C","open items"))+waitBlock(p.waiting);
     if(p.mode==="leaseup") h+=leaseupBlock(p);
-    h+=trendsBlock(p)+leasingBlock(p)+leadsBlock(p)+inventoryBlock(p)+stackBlock(p)+itemsBlock(p)+renewBlock(p)+woBlock(p)+arrearsBlock(p)+workingBlock(p)+finBlock(p);
+    h+=trendsBlock(p)+leasingBlock(p)+leadsBlock(p)+inventoryBlock(p)+stackBlock(p)+itemsBlock(p)+renewBlock(p)+increasesBlock(p)+woBlock(p)+arrearsBlock(p)+workingBlock(p)+finBlock(p);
     if(false&&p.checks&&p.checks.length) h+='<div class="checks"><b>To check in Entrata</b><ul>'+p.checks.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul></div>';
     /* source map removed from the page */
     return h;
@@ -849,6 +5075,26 @@
   var hh=(location.hash||"").slice(1);
   if(hh && (hh==="overview" || F.properties.some(function(p){return p.id===hh;}))) VIEW=hh;
   paint();
+
+  /* LIVE FIGURES. Each morning the daily routine writes the whole feed, as JSON text in field "json",
+     to this artifact's database document dash/feed. The page shows the built-in figures above until that
+     document loads, then redraws from it and stays current while open. Nothing here ever writes. */
+  function docData(x){ if(!x) return null; if(typeof x.data==="function"){ try{ return x.data(); }catch(e){ return null; } } if(x.data&&typeof x.data==="object") return x.data; return x; }
+  function applyFeed(x){
+    var d=docData(x); if(!d||typeof d.json!=="string") return;
+    try{ var nf=JSON.parse(d.json); if(!nf||!nf.properties||!nf.properties.length) return;
+      if(F && nf.generated===F.generated && nf.asAt===F.asAt && nf.dataThrough===F.dataThrough) return;
+      F=nf; TODAY=F.asAt; paint(); }catch(e){}
+  }
+  (function connect(tries){
+    if(!(window.claude&&typeof window.claude.use==="function")){ if(tries<40) setTimeout(function(){ connect(tries+1); },250); return; }
+    window.claude.use("db").then(function(db){
+      if(!db) return;
+      var ref=db.doc("dash/feed");
+      if(typeof ref.onSnapshot==="function") ref.onSnapshot(applyFeed,function(){});
+      else if(typeof ref.get==="function") ref.get().then(applyFeed,function(){});
+    },function(){});
+  })(0);
 })();
 </script>
 
