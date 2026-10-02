@@ -127,6 +127,95 @@ class FeedChecks(unittest.TestCase):
         self.assertTrue(any(f.startswith("1.") for f in self.fails()))
 
 
+@unittest.skipUnless(os.path.exists(FEED), "feed not present")
+class NewFields(unittest.TestCase):
+    def setUp(self):
+        self.old = json.load(open(FEED))
+        self.new = copy.deepcopy(self.old)
+
+    def test_committed_feed_has_mtm_and_passes(self):
+        self.assertTrue(all(isinstance(p["renewals"].get("mtm"), int) for p in self.new["properties"]))
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+
+    def test_mtm_is_required_and_a_count(self):
+        for bad in (None, -1, 1.5, "0", True):
+            self.new["properties"][0]["renewals"]["mtm"] = bad
+            self.assertTrue(any(f.startswith("14.") for f in check_feed.check(self.new, self.old)), bad)
+        del self.new["properties"][0]["renewals"]["mtm"]
+        self.assertTrue(any(f.startswith("14.") for f in check_feed.check(self.new, self.old)))
+        self.new["properties"][0]["renewals"]["mtm"] = 2
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+
+    def test_leads_week_when_present(self):
+        p = self.new["properties"][0]
+        p["leadsWeek"] = 3
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        p["leadsWeek"] = 0
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        for bad in (-1, 2.5, None, "3"):
+            p["leadsWeek"] = bad
+            self.assertTrue(any(f.startswith("15.") for f in check_feed.check(self.new, self.old)), bad)
+
+    def test_funnel_since_when_present(self):
+        p = self.new["properties"][0]
+        p["funnel"]["since"] = "2026-08-01"
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        for bad in ("08/01/2026", "2026-13", "2026-10-09", 20260801):  # the last is after dataThrough
+            p["funnel"]["since"] = bad
+            self.assertTrue(any(f.startswith("16.") for f in check_feed.check(self.new, self.old)), bad)
+
+    def test_items_income_when_present(self):
+        p = self.new["properties"][1]
+        p["items"]["income"] = 1200
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        p["items"]["income"] = 0
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        for bad in (-5, None, "1200", True):
+            p["items"]["income"] = bad
+            self.assertTrue(any(f.startswith("17.") for f in check_feed.check(self.new, self.old)), bad)
+
+    def test_missing_optional_fields_are_noted_not_failed(self):
+        notes = check_feed.gaps(self.new)
+        self.assertTrue(any("leadsWeek" in n for n in notes))
+        self.assertTrue(any("funnel.since" in n for n in notes))
+        self.assertTrue(any("items.income" in n for n in notes))
+        self.new["properties"][0]["leadsWeek"] = 1
+        self.assertFalse(any("grove: leadsWeek" in n for n in check_feed.gaps(self.new)))
+
+
+class SyncPage(unittest.TestCase):
+    PAGE = ('<html><script>/* x */\nwindow.CLIENT_FEED = {"properties": [{"arrears": {"detail": [["1", "Fake, Name"]]}}], "a": "}"};\n'
+            '</script><script>var F = window.CLIENT_FEED; /* page code */</script></html>')
+
+    def test_built_in_figures_are_removed(self):
+        from tools import sync_page
+        out = sync_page.strip_builtin_feed(self.PAGE)
+        self.assertNotIn("Fake, Name", out)
+        self.assertEqual(sync_page.feed_left_in(out), [])
+        self.assertIn("window.CLIENT_FEED = null;", out)
+        self.assertIn("var F = window.CLIENT_FEED; /* page code */", out)  # the page's own code is untouched
+        self.assertEqual(sync_page.feed_left_in(self.PAGE), ['"properties":', '"arrears":'])
+
+    def test_repo_page_carries_no_figures(self):
+        from tools import sync_page
+        path = os.path.join(ROOT, "index.html")
+        if not os.path.exists(path):
+            self.skipTest("page not present")
+        html = open(path, encoding="utf-8").read()
+        self.assertEqual(sync_page.feed_left_in(html), [], "index.html still holds the built-in figures (resident names)")
+        self.assertIn("keilty-template", html)
+
+    def test_render_swap_works_on_the_placeholder_and_on_a_real_object(self):
+        from tools import render_check, sync_page
+        stripped = sync_page.strip_builtin_feed(self.PAGE)
+        out = render_check.swap_builtin_feed(stripped, {"z": 1})
+        self.assertIn('window.CLIENT_FEED = {"z": 1};', out)
+        self.assertIn("var F = window.CLIENT_FEED;", out)
+        full = render_check.swap_builtin_feed(self.PAGE, {"z": 1})  # a page that still has the real object
+        self.assertIn('window.CLIENT_FEED = {"z": 1};', full)
+        self.assertNotIn("Fake, Name", full)
+
+
 class RenderCheck(unittest.TestCase):
     def test_swap_replaces_the_built_in_feed_only(self):
         from tools import render_check
