@@ -1,6 +1,6 @@
 """Render the dashboard with a feed in headless Chromium and fail on NaN, undefined or script errors.
 
-    python tools/render_check.py feeds/2026-10-02.json [--page index.html]
+    python tools/render_check.py tests/data/feed-2026-10-02.json [--page index.html]
     python tools/render_check.py --site work/YYYY-MM-DD/site     (the exact files to deploy; see check_site)
 
 index.html is the live page, synced from the artifact (never published from the routine). The page keeps a

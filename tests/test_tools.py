@@ -9,7 +9,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from tools import check_feed, command_center  # noqa: E402
 
-FEED = os.path.join(ROOT, "feeds", "2026-10-02.json")
+FEED = os.path.join(ROOT, "tests", "data", "feed-2026-10-02.json")
 
 
 @unittest.skipUnless(os.path.exists(FEED), "feed not present")
@@ -329,30 +329,9 @@ class NamesOutOfGit(unittest.TestCase):
          "renewals": {"note": "Suite 302 has renewed."}},
         {"id": "b", "arrears": {"detail": []}, "prospects": [{"name": "Dee Invented", "entries": []}]}]}
 
-    def test_names_become_placeholders_and_the_shape_stays(self):
-        from tools import anonymise_feed
-        out, mapping = anonymise_feed.anonymise_feed(self.FEED, ["Fakename, Ada", "Extra, Eve"])
-        a, b = out["properties"]
-        self.assertEqual([r[1] for r in a["arrears"]["detail"]], ["Resident 1", "Resident 2"])
-        self.assertEqual(a["arrears"]["note"], "Resident 1 owes nothing.")
-        self.assertEqual([p["name"] for p in a["prospects"]], ["Prospect 1"])
-        self.assertEqual(a["prospects"][0]["entries"][0][2], "Toured with Prospect 1.")
-        self.assertEqual(b["prospects"][0]["name"], "Prospect 2")
-        self.assertEqual(a["renewals"], {"note": "Suite 302 has renewed."})  # nothing else changes
-        self.assertEqual(set(mapping.values()), {"Resident 1", "Resident 2", "Resident 3", "Prospect 1", "Prospect 2"})
-        self.assertEqual(json.loads(json.dumps(out)).keys(), self.FEED.keys())
-
-    def test_the_same_person_in_two_forms_gets_one_placeholder(self):
-        from tools import anonymise_feed
-        m = anonymise_feed.placeholders(["Ada Fakename"], [], ["Fakename, Ada Marie", "Extra, Eve"])
-        self.assertEqual(m["Ada Fakename"], m["Fakename, Ada Marie"])
-        self.assertEqual(m["Extra, Eve"], "Resident 2")
-        text = anonymise_feed.replace_names("Fakename, Ada Marie and Ada Fakename and Eve Extra.", m)
-        self.assertEqual(text, "Resident 1 and Resident 1 and Resident 2.")
-
     def test_the_check_finds_a_name_in_any_file_and_passes_once_removed(self):
         import tempfile
-        from tools import anonymise_feed, check_repo_names
+        from tools import check_repo_names
         d = tempfile.mkdtemp()
         path = os.path.join(d, "feed.json")
         json.dump(self.FEED, open(path, "w"))
@@ -361,8 +340,10 @@ class NamesOutOfGit(unittest.TestCase):
         names = check_repo_names.collect_names(names_files=[os.path.join(d, "n.json")])
         bad = check_repo_names.check_paths([path], names)
         self.assertEqual([p for p, _ in bad], [path])
-        out, _ = anonymise_feed.anonymise_feed(self.FEED, ["Fakename, Ada"])
-        json.dump(out, open(path, "w"))
+        text = json.dumps(self.FEED)
+        for name, stand_in in (("Ada Fakename", "Resident 1"), ("Bo Testname", "Resident 2"), ("Cy Placeholder", "Prospect 1")):
+            text = text.replace(name, stand_in)
+        open(path, "w").write(text)
         self.assertEqual(check_repo_names.check_paths([path], names), [])
         # a last name or a first name on its own is not a hit
         open(path, "w").write("The Hill plan. Ada is the manager. Fakename Road.")

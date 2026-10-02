@@ -1,6 +1,6 @@
 """Compare what the parsers read from one folder of PDFs with the figures in a feed.
 
-    python -m parsers.compare <folder> grove|f47 [--feed feeds/2026-10-02.json] [--snapshot 2026-09-30]
+    python -m parsers.compare <folder> grove|f47 [--feed tests/data/feed-2026-10-02.json] [--snapshot 2026-09-30]
 
 Prints every difference. It never decides which side is right.
 """
@@ -184,7 +184,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
     ap.add_argument("prop")
-    ap.add_argument("--feed", default="feeds/2026-10-02.json")
+    ap.add_argument("--feed", default="tests/data/feed-2026-10-02.json")
     ap.add_argument("--snapshot")
     a = ap.parse_args()
     diffs, notes = run(a.folder, a.prop, a.feed, a.snapshot)

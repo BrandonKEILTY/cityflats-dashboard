@@ -461,7 +461,7 @@ class MissingAndUnreadable(unittest.TestCase):
         self.assertEqual(f["snapshot"]["date"], "2026-09-30")
         self.assertEqual(len(f["workOrders"]), 2)
         self.assertNotIn("inventory", f)
-        prev = json.load(open(os.path.join(ROOT, "feeds", "2026-10-02.json")))
+        prev = json.load(open(os.path.join(ROOT, "tests", "data", "feed-2026-10-02.json")))
         f2 = figures.build(DATA, "f47", "2026-09-30", property_name=STABLE, previous_feed=prev)
         self.assertIn("budgetStatus", f2)
 

@@ -111,7 +111,7 @@ python -m unittest discover -s tests -v
 
 ### Names stay out of git
 
-R2 (`keilty-dashboards/cityflats/`) is the record and keeps the real names; the deployed site is behind Cloudflare Access. Nothing committed may hold a resident or prospect name. The files already in `feeds/` were written through `tools/anonymise_feed.py` (names become "Resident 1", "Prospect 1", same shape) and no new ones are added, `index.html` has its built-in figures removed by `tools/sync_page.py`, and `tools/check_repo_names.py` fails if a name from the Rent Roll, the arrears table or the prospects appears in any file. Test fixtures with real names live in the git-ignored `fixtures/` and `work/`.
+R2 (`keilty-dashboards/cityflats/`) is the record and keeps the real names; the deployed site is behind Cloudflare Access. Nothing committed may hold a resident or prospect name. No daily feed is committed. The one sample feed, `tests/data/feed-2026-10-02.json`, was anonymised (names became "Resident 1", "Prospect 1", same shape) before it was committed, `index.html` has its built-in figures removed by `tools/sync_page.py`, and `tools/check_repo_names.py` fails if a name from the Rent Roll, the arrears table or the prospects appears in any file. Test fixtures with real names live in the git-ignored `fixtures/` and `work/`.
 
 ### The page
 

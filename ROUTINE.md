@@ -124,7 +124,7 @@ The order matters. Save first; deploy only after the save is confirmed.
    Deploy only the `site` folder, nothing else. If the deploy fails, retry once. If it still fails, keep the R2 save (never undo it), say in the summary that the figures are saved in R2 but the page still shows the previous day, and send a notification. The next run deploys as normal.
 5. **Check the gate.** `curl -sS -o /dev/null -w "%{http_code} %{redirect_url}" https://cityflats-dashboard.pages.dev/feed.json` must be a 302 to `cloudflareaccess.com`. If it returns the file, send a notification at once: the figures are open to anyone.
 6. **Backup write during the two-week overlap.** `ArtifactData set` on the dashboard URL, collection `dash`, document `feed`, with `if_version` = the version read in section 4, `file_path` = `work/YYYY-MM-DD/site/feed.json`. Do not republish the artifact. If the write is refused for a version change, re-read and write again; if it needs approval or fails for any other reason, say so in the summary (R2 and the site are the record). Do this even when step 2 failed. Brandon drops this step when the artifact is retired.
-7. **No GitHub commits.** Daily figures live in R2 only. Do not commit, push or open a pull request; `feeds/` keeps the files already there and gets no new ones.
+7. **No GitHub commits.** Daily figures live in R2 only. Do not commit, push or open a pull request.
 
 ## 7. Summary and notification
 
@@ -139,4 +139,4 @@ Push a notification (PushNotification, message inside `<routine_summary>` tags) 
 
 After the first save that uses the parsers, and on any run that changed how the feed is built, tell Brandon that a parser-built feed is saved and deployed so he can check https://cityflats-dashboard.pages.dev against the Claude artifact.
 
-The summary always says: R2 saved (yes or no, with the history file name), deployed (yes or no, with the deployment address wrangler printed), and whether the `dash/feed` backup write went through.
+The summary always opens with three lines, each passed or failed: **R2 save** (with the history file name and that the read-back matched), **deploy** (with the deployment address wrangler printed), **gate check** (the status and where `feed.json` redirected). Then whether the `dash/feed` backup write went through.
