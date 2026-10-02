@@ -6,6 +6,26 @@ This is the exact instruction set the current 6:00 a.m. Claude app task follows.
 
 Update the Cityflats Dashboard for Brandon Ackerman (KEILTY Realty Management Inc.). This runs automatically every morning at 6:00; Brandon can also start it by hand. Dates are always YYYY-MM-DD. Canadian spelling, no em dashes. The goal is that every figure comes from Entrata. Only three things come from the team on the Command Center: client items (awaiting your input), what we are working on (open KEILTY items), and tours booked ahead (the Command Center's "Tours booked" section).
 
+## HOW THE FIGURES ARE READ (added 2026-10-03)
+
+- **Every figure comes from the parsers** in `parsers/` (see "How to run the parsers" in README-for-Claude-Code.md). Do not read figures off the PDFs by eye. Your own judgement is for client wording and the Command Center items only.
+- Where the older text below says "read" or "write" a figure, it means: take it from `python -m parsers.figures`. The rules below still define what each figure means.
+- **Rulings that apply to the parsers:**
+  - `deals`: Grove lists only leases in progress; Faculty47 lists every future resident (leased or in progress).
+  - `inventory.units`: "available on" is the report's date for every suite.
+  - Vendor names are written exactly as Entrata reports them.
+  - Open work orders only; completed orders are dropped.
+  - `holds` on the history snapshot = `counts.applications`.
+  - Closed months for the income statements: the period on the Budget vs Actual header and earlier.
+  - Amounts are as the export shows them; do not adjust for what a later report would say.
+  - A report missing from the package (for example Faculty47 Concessions on a day it is left out) keeps its last figures and is flagged, never filled in.
+  - The first time Expiring Leases has rows, say so in the summary, because that layout has not been checked against a real report.
+- **Input is Excel.** The connector returns an `.xlsx` attachment as clean tab-separated text; PDFs come back flattened and are not parsed. The step-by-step run is in `ROUTINE.md`.
+  - A report with no Excel in any of today's packages is missing: keep its last figures and flag it.
+  - A sheet the parser cannot read: keep that report's last figures, raise a `fix` flag, describe it in the summary, and carry on with the rest. Only a failed whole-feed check stops the run.
+  - Expiring Leases that says "returned no data" means zero expiring leases.
+  - `inventory.plans`, `inventory.askingAvg` and `weeklyChecklist` are carried forward unchanged.
+
 ## THE DASHBOARD
 
 - **Where it lives:** https://claude.ai/artifact/JLRG3EwBZa3G1576ZJ8xxy (title "Cityflats Dashboard").
