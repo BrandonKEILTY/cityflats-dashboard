@@ -4,8 +4,9 @@ One module per Entrata report. `parse(path)` returns numbers and rows read from 
 
 ```
 pip install -r requirements.txt
+python -m parsers.figures fixtures/<folder> grove --data-through 2026-09-30   # every figure for one property, as JSON
 python -m unittest discover -s tests -v          # needs fixtures/ (git-ignored)
-python -m parsers.compare fixtures/<folder> grove --feed feeds/2026-10-02.json --snapshot 2026-09-30
+python -m parsers.compare fixtures/<folder> grove --feed feeds/2026-10-02.json
 python -m parsers.diff_report > DIFFERENCES.md
 ```
 

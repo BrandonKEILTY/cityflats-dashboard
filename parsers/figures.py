@@ -1,0 +1,58 @@
+"""All the figures for one property on one day, as JSON, using the parsers and the rules.
+
+    python -m parsers.figures <folder> grove|f47 --data-through 2026-10-01 > figures.json
+
+Keys follow the feed. Client wording (notes, problem text, prospect note text) is not
+written here; the run writes it under the writing rules.
+"""
+import argparse
+import json
+
+from . import activity_log, derive, registry
+
+MODES = {"grove": "leaseup", "f47": "stabilised"}
+
+
+def build(folder, prop_id, data_through):
+    r = registry.load(folder)
+    mode = MODES[prop_id]
+    out = {"id": prop_id, "dataThrough": data_through, "missing": r["missing"], "warnings": r["warnings"]}
+    rr, av = r["Rent Roll"], r["Availability"]
+    al = activity_log.dedupe(r["Activity Log"]["entries"]) if r["Activity Log"] else None
+    if rr and av:
+        out["counts"] = derive.counts(rr, av, al)
+        out["stack"] = derive.stack(rr, av)
+        out["deals"] = derive.deals(rr, mode)
+        out["rent"] = derive.rent(rr, av)
+        out["renewals"] = derive.renewals(rr, r["Expiring Leases"])
+        out["inventory"] = {"units": [[u["unit"], u["plan"], u["sqft"], u["budget_rent"], u["available_on"] or "", u["status"]] for u in av["units"]],
+                            "unleasedMonthly": sum(u["budget_rent"] for u in av["units"] if u["status"] == "Vacant Unrented Ready")}
+    if r["Resident Aged Receivables"]:
+        out["arrears"] = derive.arrears(r["Resident Aged Receivables"])
+    if r["Lease Term Progress Summary"]:
+        out["funnel"] = derive.funnel(r["Lease Term Progress Summary"])
+    if r["Concessions"] and rr:
+        out["concessions"] = derive.concessions(r["Concessions"], rr)
+    if r["Rentable Items Availability"]:
+        out["items"] = derive.parking(r["Rentable Items Availability"])
+    if r["Income Statement - Budget vs Actual"] and r["Income Statement - Trailing 12"]:
+        out["budget"] = derive.budget(r["Income Statement - Budget vs Actual"], r["Income Statement - Trailing 12"])
+    if r["Work Order Details"]:
+        out["workOrders"] = derive.open_work_orders(r["Work Order Details"])
+    if al is not None:
+        out["activity"] = {"date": r["Activity Log"].get("activity_date"), "entries": al}
+    out["snapshot"] = derive.snapshot(r, data_through)
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("folder")
+    ap.add_argument("prop", choices=sorted(MODES))
+    ap.add_argument("--data-through", required=True)
+    a = ap.parse_args()
+    print(json.dumps(build(a.folder, a.prop, a.data_through), indent=1, default=str))
+
+
+if __name__ == "__main__":
+    main()

@@ -123,7 +123,9 @@ class OtherReports(unittest.TestCase):
         self.assertEqual(len(f["rows"]), 12)
         self.assertEqual(f["totals"][2], -67225.0)
         rr = rent_roll.parse(pdf(F0, "Rent Roll"))
-        self.assertEqual(derive.concessions(f, rr)["total"], 63475.0)  # cancelled lease (103 Hulme) left out
+        c = derive.concessions(f, rr)
+        self.assertEqual(c["total"], 63475.0)  # cancelled lease (103 Hulme) left out
+        self.assertEqual(len(c["units"]), 11)
 
     def test_rentable_items(self):
         g = rentable_items.parse(pdf(G1, "Rentable Items"))
@@ -147,6 +149,7 @@ class OtherReports(unittest.TestCase):
         self.assertEqual(m["noi"], [-36849.24, -27478.17, -204241.84, -297508.53])
         self.assertEqual(m["annualNoi"], -375601.04)
         self.assertEqual(m["noiMonths"][0], "2026-01")
+        self.assertEqual(m["period"], "2026-09")  # read from the statement header
         self.assertEqual(m["noiMonths"][-1], "2026-09")
         self.assertEqual(m["noiTrend"][-1], -36849.24)
         fb = income_budget.parse(pdf(F1, "Income Statement - Budget"))
@@ -173,14 +176,47 @@ class MissingReports(unittest.TestCase):
         self.assertIn("Concessions", registry.load(F1)["missing"])
         self.assertNotIn("Concessions", registry.load(F0)["missing"])
 
-    def test_09_30_work_orders_are_all_completed_for_faculty47(self):
+    def test_09_30_faculty47_work_order_export_was_set_up_wrong(self):
+        # That early export holds only completed orders. It is kept to show completed orders are
+        # dropped, not to test open ones; the 2026-10-01 export is the right set-up.
         wo = registry.load(F0)["Work Order Details"]
         self.assertEqual(len(wo["orders"]), 13)
         self.assertEqual(derive.open_work_orders(wo), [])
 
+    def test_expiring_leases_with_rows_raises_a_warning(self):
+        self.assertEqual(registry.load(G1)["warnings"], [])
+        real = registry.READERS["Expiring Leases"]
+        fake = lambda path: {"report": "Expiring Leases", "rows": [{"line": "101 x", "dates": []}], "no_data": False, "row_layout_tested": False}
+        registry.READERS["Expiring Leases"] = (real[0], fake)
+        try:
+            w = registry.load(G1)["warnings"]
+        finally:
+            registry.READERS["Expiring Leases"] = real
+        self.assertEqual(len(w), 1)
+        self.assertIn("Expiring Leases has rows", w[0])
+
 
 @unittest.skipUnless(G1 and F1, "fixtures not present")
 class Derived(unittest.TestCase):
+    def test_deals_follow_the_property_mode(self):
+        g = rent_roll.parse(pdf(G1, "Rent Roll"))
+        lease_up = derive.deals(g, "leaseup")
+        self.assertEqual(len(lease_up), 14)  # only leases in progress
+        self.assertTrue(all(not d["leased"] for d in lease_up))
+        self.assertEqual(len(derive.deals(g, "stabilised")), 30)  # one row per suite
+        f = rent_roll.parse(pdf(F1, "Rent Roll"))
+        self.assertEqual([d["unit"] for d in derive.deals(f, "stabilised")], ["202", "301C"])
+
+    def test_snapshot_is_dated_and_holds_are_applications(self):
+        g = registry.load(G1)
+        s = derive.snapshot(g, "2026-09-30")
+        self.assertEqual(s["date"], "2026-09-30")
+        self.assertEqual((s["leads"], s["apps"], s["holds"], s["wo"], s["owing"], s["tours"]), (19, 11, 0, 1, 0, 5))
+        f = derive.snapshot(registry.load(F1), "2026-09-30")
+        self.assertEqual((f["leased"], f["inProgress"], f["tours"]), (17, 1, 1))
+        missing = derive.snapshot({"Rent Roll": None, "Availability": None}, "2026-09-30")
+        self.assertIsNone(missing["leased"])
+
     def test_counts_match_report_totals(self):
         g = registry.load(G1)
         c = derive.counts(g["Rent Roll"], g["Availability"])
@@ -190,6 +226,20 @@ class Derived(unittest.TestCase):
         f = registry.load(F1)
         c = derive.counts(f["Rent Roll"], f["Availability"])
         self.assertEqual((c["occupied"], c["leased"], c["inProgress"], c["available"]), (16, 1, 1, 1))
+
+
+@unittest.skipUnless(G1 and F1, "fixtures not present")
+class Figures(unittest.TestCase):
+    def test_figures_cover_every_property_and_flag_missing(self):
+        from parsers import figures
+        g = figures.build(G1, "grove", "2026-09-30")
+        self.assertEqual(g["counts"]["available"], 51)
+        self.assertEqual(len(g["stack"]), 82)
+        self.assertEqual(g["snapshot"]["date"], "2026-09-30")
+        f = figures.build(F1, "f47", "2026-09-30")
+        self.assertEqual(f["missing"], ["Concessions"])
+        self.assertNotIn("concessions", f)
+        self.assertEqual(len(f["workOrders"]), 13)
 
 
 if __name__ == "__main__":

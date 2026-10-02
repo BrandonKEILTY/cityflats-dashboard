@@ -42,16 +42,16 @@ def run(folder, prop_id, feed_path, snapshot=None):
             d("counts", k, c[k], p["counts"].get(k))
         if "occupied" in p["counts"]:
             d("counts", "occupied", c["occupied"], p["counts"]["occupied"])
-        # The rules do not say which future residents belong in "deals" (the Grove feed lists only the
-        # in-progress suites, Faculty47 lists its two move-ins), so only check deals the feed already has.
+        mine = {x["unit"]: x for x in derive.deals(rr, p["mode"])}
         fd = {x["unit"]: x for x in p["deals"]}
-        mine = {x["unit"]: x for x in derive.deals(rr)}
-        for u, f in fd.items():
-            if u not in mine:
-                diffs.append(("deals", u, None, f["rent"]))
+        for u in sorted(set(mine) | set(fd)):
+            if u not in fd:
+                diffs.append(("deals", u, mine[u]["rent"], None))
+            elif u not in mine:
+                diffs.append(("deals", u, None, fd[u]["rent"]))
             else:
-                d("deals", u + " rent", mine[u]["rent"], f["rent"])
-                d("deals", u + " move-in", mine[u]["movein"][:10], str(f["movein"])[:10])
+                d("deals", u + " rent", mine[u]["rent"], fd[u]["rent"])
+                d("deals", u + " move-in", mine[u]["movein"][:10], str(fd[u]["movein"])[:10])
         rt, fr = derive.rent(rr, av), p["rent"]
         for k in ("committed", "committedCount", "signed", "signedCount", "inPlace", "occupiedCount", "futureRent", "fullBudget", "fullCount", "avgSuite"):
             if k in fr:
@@ -61,15 +61,10 @@ def run(folder, prop_id, feed_path, snapshot=None):
         if "byEnd" in p["renewals"]:
             d("renewals", "byEnd", [list(x) for x in rn["byEnd"]], p["renewals"]["byEnd"])
         inv = {x[0]: x for x in p["inventory"]["units"]}
-        blank_avail = all(not x[4] for x in inv.values())
-        if blank_avail:
-            notes.append("inventory: the feed leaves 'available on' blank for every suite; the report has dates, so that column was not compared")
         for s in av["units"]:
             f = inv.get(s["unit"])
             if f:
                 for i, (k, v) in enumerate((("plan", s["plan"]), ("sqft", s["sqft"]), ("budget rent", s["budget_rent"]), ("available on", s["available_on"] or ""))):
-                    if i == 3 and blank_avail:
-                        continue
                     d("inventory", f'{s["unit"]} {k}', v, f[i + 1] if i < 3 else f[4])
     if r["Resident Aged Receivables"]:
         a, fa = derive.arrears(r["Resident Aged Receivables"]), p["arrears"]
@@ -161,16 +156,11 @@ def run(folder, prop_id, feed_path, snapshot=None):
                 diffs.append(("prospects", f'{e["name"]} {e["when"]} {e["type"]}', "in report", "not in feed"))
     if snapshot:
         h = next((x for x in p["history"] if x["date"] == snapshot), None)
+        mine = derive.snapshot(r, snapshot)
         if h:
-            f = derive.funnel(r["Lease Term Progress Summary"]) if r["Lease Term Progress Summary"] else {}
-            c = derive.counts(rr, av, al) if rr and av else {}
-            pk = derive.parking(r["Rentable Items Availability"]) if r["Rentable Items Availability"] else {}
-            ow = derive.arrears(r["Resident Aged Receivables"]) if r["Resident Aged Receivables"] else {}
-            leased = c.get("leased", 0) + c.get("occupied", 0) if "occupied" in p["counts"] else c.get("leased")
-            for k, v in (("leads", f.get("leads")), ("apps", f.get("apps")), ("leased", leased), ("inProgress", c.get("inProgress")),
-                         ("available", c.get("available")), ("parking", pk.get("occupied")), ("owing", ow.get("owing")),
-                         ("tours", c.get("toursToday")), ("wo", len(derive.open_work_orders(r["Work Order Details"])) if r["Work Order Details"] else None)):
-                d(f"history {snapshot}", k, v, h.get(k))
+            for k, v in mine.items():
+                if k != "date":
+                    d(f"history {snapshot}", k, v, h.get(k))
         else:
             notes.append(f"no history snapshot dated {snapshot} in the feed")
     return diffs, notes

@@ -40,7 +40,7 @@ This folder holds live copies of `index.html`, `data.js` and `cityflats-logo.png
    - They arrive in Brandon.Ackerman@keilty.com at about 3:00 a.m. from system@entrata.com, with subjects starting "Entrata Reports - Command Center Reports - ...".
    - There are several packages, so read them all.
    - Keep only the rows for "The Cedar at the Grove" and "Faculty47".
-2. **Turn each report into the dashboard figures** (section 5, and STEP 2 of the rules).
+2. **Get the figures from the parsers** (section 4 and "How to run the parsers" below), not by reading the PDFs yourself. Every number comes from `python -m parsers.figures`. Your own judgement is for client wording only (notes, problem text, prospect note text, open-item sentences) and for the Command Center items.
 3. **Read the Command Center's open items and tours booked, read only.** These come from the page's built-in `"items":` array, then `board/newitems`, then `board/edits`, using the filters in STEP 3. **Never write to the Command Center.**
 4. **Add one history snapshot**, dated yesterday.
 5. **Run the checks in section 6.** If any check fails, don't save.
@@ -68,17 +68,40 @@ If no Entrata email arrived, still refresh the Command Center items, leave the E
 
 ---
 
-## 4. Build the reading as fixed code
+## 4. The reading is fixed code (done, in `parsers/`)
 
-The point of the routine is that the same report is read the same way every morning. So:
+The same report is read the same way every morning. One parser per report, committed here, with tests against `fixtures/` (the 2026-09-30 and 2026-10-01 exports; git-ignored because they hold resident names and balances).
 
-- **One parser script per report** (Python is fine), committed to this repository, each with a test using the 2026-09-30 and 2026-10-01 PDFs. I can supply them: "Command Center Reports - The Grove - 2026-10-01 0951.zip" and "... Faculty47 - 2026-10-01 0951.zip".
-- **Work Order Details:** the rows wrap, so read by word position (pdfplumber).
-- **Activity Log:** repeats entries two or three times, so de-duplicate on name, date and time, and type.
-- **Only use your own judgement for wording:** short client sentences and the cleaning rules in section 5. Numbers come from the scripts.
-- **Add a setup script** in the routine's cloud environment that installs what the parsers need (pdfplumber, node), so every run has them.
+- Numbers come from the scripts. Only wording is yours: short client sentences and the cleaning rules in section 5.
+- Work Order Details is read from text flow plus character positions for the vendor column. Receivables and the Activity Log are read by word position. The Activity Log's repeated entries are de-duplicated on name, date and time, and type.
+- `parsers/README.md` lists each module and how it reads its rows. `DIFFERENCES.md` records how the parsers compared with the 2026-10-02 feed, and the rulings made on each point.
+- **Setup script for the routine's cloud environment:** `pip install -r requirements.txt` (pdfplumber). Node is used only for `node --check` and the render test.
 
----
+### How to run the parsers
+
+```
+pip install -r requirements.txt
+# one property, one folder of that day's PDFs (file names start with the report name):
+python -m parsers.figures <folder> grove --data-through YYYY-MM-DD > grove.json
+python -m parsers.figures <folder> f47   --data-through YYYY-MM-DD > f47.json
+# tests and checks
+python -m unittest discover -s tests -v          # needs fixtures/
+python -m parsers.compare <folder> grove --feed feeds/YYYY-MM-DD.json
+python -m parsers.diff_report > DIFFERENCES.md
+```
+
+- `figures` prints counts, stack, deals, rent, renewals, inventory units, arrears, funnel, concessions, parking items, budget, open work orders, the day's activity entries and the history snapshot (dated `--data-through`).
+- `missing` lists any report not in the folder. Keep that report's last figures, add a "missing" entry, and name it in the summary. Never present older figures as current.
+- `warnings` must be read and passed on in the summary. The first time Expiring Leases has rows, the routine says so, because its row layout has not been checked against a real report.
+- A parser raises an error on a row it cannot read. Treat that as a failed check: stop, change nothing, say why.
+
+### Not covered by the parsers yet
+
+These still need the run's own judgement or a rule from Brandon: `inventory.plans` (the per-plan table and its bedroom labels), `rent.avgSqft`, `rent.signedBudget` and `lossToLease`, the labels on `budget.lines`, `weeklyChecklist`, and all client wording.
+
+### Open problem: getting the PDFs into the parsers
+
+The parsers read PDF files. On 2026-10-02 the Outlook connector's `read_resource` returned each attachment as extracted text, not as a file, and the "Download PDF" links in the emails need an Entrata login. Until the routine can save the attachments as PDFs (for example a OneDrive or SharePoint folder, or a file drop the routine can read), it cannot run `parsers.figures` on live data. Do not work around this by hand-reading the text; tell Brandon.
 
 ## 5. Feed structure and rules
 
@@ -95,8 +118,8 @@ The point of the routine is that the same report is read the same way every morn
 | `planBeds` (if present) | Floor plan to bedrooms, set by me | **Never change** |
 | `counts` | `leased, inProgress, applications, available, toursToday` (F47 also `occupied`) | Rent Roll, Availability, Activity Log |
 | `stack` | `[suite, plan, status]`; status is `occupied, leased, progress, applied, available, model` | Availability + Rent Roll |
-| `deals` | `{unit, plan, rent, movein}` | Rent Roll |
-| `inventory` | `{source, plans, askingAvg, unleasedMonthly, units}`; `units` is `[suite, plan, sqft, budgeted rent, available on, status]` | Availability |
+| `deals` | `{unit, plan, rent, movein}`, one per suite. Grove (lease-up): only leases in progress ("Leases in progress"). Faculty47 (stabilised): every future resident, leased or in progress ("Moving in"). | Rent Roll |
+| `inventory` | `{source, plans, askingAvg, unleasedMonthly, units}`; `units` is `[suite, plan, sqft, budgeted rent, available on, status]`. "Available on" is the report's date for every suite, occupied ones included (the page only shows it for suites that are not occupied). | Availability |
 | `funnel` | `{source, stages, total, avgTotal}` | Lease Term Progress Summary |
 | `prospects` | `{name, unit, status, agent, entries}`; entries newest first and never removed | Activity Log, Leasing |
 | `items` | Parking `{source, list, occupied, total, note}` | Rentable Items Availability |
@@ -104,9 +127,9 @@ The point of the routine is that the same report is read the same way every morn
 | `arrears` | `{source, owing, due, dueLabel, former, formerCount, detail, note}` | Resident Aged Receivables |
 | `rent` | Rent in place, averages, loss to lease, committed, full budget | Rent Roll + Availability |
 | `concessions` | `{source, units: [{unit, plan, term, total}], total, note}` | Concessions |
-| `budget` | `{source, period, lines, noi, annualNoi, noiMonths, noiTrend, note}` | Income Statement Budget vs Actual + Trailing 12 |
-| `workOrders` | `{ref, unit, problem, status, created, due, age, vendor, notes}` | Work Order Details, current and prior year |
-| `history` | `{date, leads, apps, leased, inProgress, holds, available, parking, wo, owing, tours}` | Built by the run |
+| `budget` | `{source, period, lines, noi, annualNoi, noiMonths, noiTrend, note}`. Closed months are the period on the Budget vs Actual header and earlier. | Income Statement Budget vs Actual + Trailing 12 |
+| `workOrders` | `{ref, unit, problem, status, created, due, age, vendor, notes}`. Open orders only (completed are dropped). Vendor exactly as Entrata reports it. | Work Order Details, current and prior year |
+| `history` | `{date, leads, apps, leased, inProgress, holds, available, parking, wo, owing, tours}`; `holds` = `counts.applications`. Built by `parsers.figures` (`snapshot`). | Built by the run |
 | `waiting` / `working` | Open items | Command Center |
 | `toursBooked` | `{name, tour, tent}` | Command Center, Tours booked rule |
 | `package`, `missing` | For KEILTY only; not shown on the page | Built by the run |
@@ -125,6 +148,7 @@ The full wording is in `daily-job-rules.md`.
 - **Concessions:** one total per lease, rent and parking together.
 - **New leads** = Guest Card Completed.
 - **Expiring Leases** lists the next four months.
+- **Amounts are as the export shows them.** Do not adjust a figure because a later report would differ (for example arrears `due` is the export's figure at its own time).
 - **Tours booked ahead:** exactly the Command Center's Tours booked rule. That means open items with a tour date of today or later, sorted by date then time.
 - **Open items:**
   - Client items go to `waiting`; KEILTY items go to `working`.

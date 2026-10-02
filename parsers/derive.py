@@ -1,5 +1,6 @@
 """Figures the dashboard shows, worked out from the parsed reports with the rules in
 daily-job-rules.md. Numbers only; client wording is not written here."""
+import re
 from collections import Counter
 
 
@@ -40,11 +41,19 @@ def counts(rr, av, al=None):
     return c
 
 
-def deals(rr):
-    out = []
+def deals(rr, mode):
+    """Future residents shown on the dashboard, one row per suite.
+    leaseup (The Grove): only leases in progress, i.e. no last month's rent yet ("Leases in progress").
+    stabilised (Faculty47): every future resident, leased or in progress ("Moving in")."""
+    out, seen = [], set()
     for f in rr["future"]:
-        if f["scheduled"] is not None:
-            out.append({"unit": f["unit"], "plan": f["type"], "rent": f["scheduled"], "movein": f["move_in"], "leased": _leased(f)})
+        if f["scheduled"] is None or f["unit"] in seen:
+            continue
+        leased = _leased(f)
+        if mode == "leaseup" and leased:
+            continue
+        seen.add(f["unit"])
+        out.append({"unit": f["unit"], "plan": f["type"], "rent": f["scheduled"], "movein": f["move_in"], "leased": leased})
     return out
 
 
@@ -108,18 +117,29 @@ def parking(ri):
             "occupied": sum(1 for i in items if i["status"] in ("Occupied", "Reserved")), "total": len(items)}
 
 
+MONTHS = {m: i + 1 for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
+
+
+def period_month(bva):
+    """'Sep 2026' on the Budget vs Actual header -> '2026-09'. Falls back to the month before the export date."""
+    m = re.match(r"^([A-Z][a-z]{2}) (\d{4})$", (bva.get("period") or "").strip())
+    if m and m.group(1) in MONTHS:
+        return f"{m.group(2)}-{MONTHS[m.group(1)]:02d}"
+    d = bva.get("as_of") or bva.get("data_as_of") or ""
+    y, mo = int(d[:4]), int(d[5:7])
+    return f"{y - 1}-12" if mo == 1 else f"{y}-{mo - 1:02d}"
+
+
 def budget(bva, t12):
     g = {x["name"]: x for x in bva["groups"]}
     noi = g["Net Operating Income"]
-    months = [m for m in t12["months"]]
     row = next(r for r in t12["rows"] if r["name"] == "Net Operating Income")
-    as_of = (t12.get("as_of") or t12.get("data_as_of") or "")[:7]
-    closed = sorted(m for m in months if m < as_of)
-    series = [(m, row["by_month"][m]) for m in closed]
+    last = period_month(bva)  # closed months only: the statement's own period and earlier
+    series = [(m, row["by_month"][m]) for m in sorted(t12["months"]) if m <= last]
     while series and series[0][1] == 0:  # leading months before the property had activity
         series.pop(0)
     return {"noi": [noi["actual"], noi["budget"], noi["ytd_actual"], noi["ytd_budget"]], "annualNoi": noi["annual_budget"],
-            "noiMonths": [m for m, _ in series], "noiTrend": [v for _, v in series],
+            "period": last, "noiMonths": [m for m, _ in series], "noiTrend": [v for _, v in series],
             "lines": sorted(((x["actual"], x["budget"], x["ytd_actual"], x["ytd_budget"]) for x in bva["groups"]))}
 
 
@@ -134,3 +154,27 @@ CLOSED = ("completed", "cancelled", "canceled", "closed")
 def open_work_orders(wo):
     """Orders still open. The report also lists finished ones; those are dropped."""
     return [o for o in wo["orders"] if (o["status"] or "").lower() not in CLOSED]
+
+
+def snapshot(reports, date):
+    """The day's history entry, dated with dataThrough. A field is None when its report is missing.
+    holds = suites Availability shows as rented with no one on the Rent Roll (counts.applications)."""
+    rr, av = reports.get("Rent Roll"), reports.get("Availability")
+    al = reports.get("Activity Log")
+    c = counts(rr, av) if rr and av else None
+    lt = funnel(reports["Lease Term Progress Summary"]) if reports.get("Lease Term Progress Summary") else None
+    ri = reports.get("Rentable Items Availability")
+    ar = reports.get("Resident Aged Receivables")
+    wo = reports.get("Work Order Details")
+    from .activity_log import dedupe
+    return {
+        "date": date,
+        "leads": lt["leads"] if lt else None, "apps": lt["apps"] if lt else None,
+        "leased": (c["leased"] + c["occupied"]) if c else None,  # Faculty47 counts occupied suites as leased; the Grove has none
+        "inProgress": c["inProgress"] if c else None, "holds": c["applications"] if c else None,
+        "available": c["available"] if c else None,
+        "parking": parking(ri)["occupied"] if ri else None,
+        "wo": len(open_work_orders(wo)) if wo else None,
+        "owing": arrears(ar)["owing"] if ar else None,
+        "tours": sum(1 for e in dedupe(al["entries"]) if e["type"] == "Tour") if al else None,
+    }

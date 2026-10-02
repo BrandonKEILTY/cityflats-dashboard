@@ -9,10 +9,11 @@ import os
 from .compare import run
 
 RUNS = [
-    ("The_Grove", "2026-10-01_0951", "grove", "2026-09-30"),
-    ("Faculty47", "2026-10-01_0951", "f47", "2026-09-30"),
-    ("The_Grove", "2026-09-30_1813", "grove", "2026-09-30"),
-    ("Faculty47", "2026-09-30_1756", "f47", "2026-09-30"),
+    # No history snapshot comparison: the feed's 2026-09-30 snapshots were put together by hand.
+    ("The_Grove", "2026-10-01_0951", "grove", None),
+    ("Faculty47", "2026-10-01_0951", "f47", None),
+    ("The_Grove", "2026-09-30_1813", "grove", None),
+    ("Faculty47", "2026-09-30_1756", "f47", None),
 ]
 
 
