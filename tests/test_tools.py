@@ -92,6 +92,13 @@ class FeedChecks(unittest.TestCase):
         self.new["properties"][0]["rent"]["note"] = "The Hill plan; Anne is the property manager."
         self.assertEqual(check_feed.check(self.new, self.old, names), [])
 
+    def test_renewed_suite_must_not_be_on_the_increases_list(self):
+        row = {"num": "302", "rent": 4295, "earliest": "2027-05-01", "noticeBy": "2027-01-31"}
+        self.new["properties"][1]["increases"] = [row]
+        self.assertEqual(check_feed.check(self.new, self.old, None, {"f47": []}), [])
+        f = check_feed.check(self.new, self.old, None, {"f47": ["302"]})
+        self.assertTrue(any(x.startswith("13.") and "302" in x for x in f))
+
     def test_by_end_stays_inside_12_months(self):
         self.new["properties"][1]["renewals"]["byEnd"].append(["2027-12-28", 1])
         self.assertTrue(any(f.startswith("10.") and "outside" in f for f in self.fails()))
