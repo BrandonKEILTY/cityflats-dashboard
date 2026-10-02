@@ -239,10 +239,98 @@ class NewFieldsForTemplate12(unittest.TestCase):
         self.assertEqual(f["renewals"]["mtm"], 0)
         gaps = " ".join(f["notCarried"])
         self.assertIn("leadsWeek", gaps)
-        self.assertIn("funnel.since", gaps)
-        self.assertNotIn("items.income", gaps)  # this Rent Roll does carry a parking code
         self.assertNotIn("leadsWeek", f)
-        self.assertNotIn("since", f.get("funnel", {}))
+
+
+class LeadsWeekAndFunnelSince(unittest.TestCase):
+    def test_week_runs_thursday_to_wednesday(self):
+        self.assertEqual(derive.week_start("2026-10-01"), "2026-10-01")  # a Thursday
+        self.assertEqual(derive.week_start("2026-10-07"), "2026-10-01")  # the Wednesday that ends it
+        self.assertEqual(derive.week_start("2026-10-08"), "2026-10-08")  # a new week starts on Thursday
+        self.assertEqual(derive.week_start("2026-09-30"), "2026-09-24")
+        self.assertEqual(derive.week_ending("2026-10-01"), "2026-10-07")
+
+    def test_new_cards_counts_first_seen_names_with_guest_card_completed(self):
+        e = lambda name, status: {"name": name, "status": status, "type": "Tour"}
+        log = [e("Fake, A", "Guest Card : Completed"), e("Fake, A", "Guest Card : Completed"), e("Fake, B", "Guest Card : Completed"),
+               e("Fake, C", "Guest Card : Completed"), e("Fake, D", "Application : Started")]
+        self.assertEqual(derive.new_cards(log, ["B Fake"]), 2)  # B was seen before, in either name order; D is not at that status
+        self.assertEqual(derive.new_cards(log, []), 3)
+        self.assertIsNone(derive.new_cards(log, None))  # nothing saved to compare with: not reliable, so no count
+
+    def test_funnel_dates_come_from_the_run_date(self):
+        self.assertEqual(derive.last_week("2026-10-02"), ("2026-09-21", "2026-09-27"))
+        self.assertEqual(derive.last_week("2026-10-05"), ("2026-09-28", "2026-10-04"))  # Monday: the week that just ended
+        self.assertEqual(derive.last_week("2026-10-04"), ("2026-09-21", "2026-09-27"))  # Sunday: still the week before
+
+    def test_leads_week_is_the_sum_of_stored_daily_counts(self):
+        h = [{"date": "2026-09-30", "newCards": 9}, {"date": "2026-10-01", "newCards": 2}, {"date": "2026-10-02", "newCards": 0},
+             {"date": "2026-10-04", "newCards": 3}]
+        self.assertEqual(derive.leads_week(h, "2026-10-02"), (2, []))  # Wednesday's 9 belongs to the week before
+        self.assertEqual(derive.leads_week(h, "2026-10-04"), (5, ["2026-10-03"]))  # 10-03 has no snapshot: listed, not guessed
+        self.assertEqual(derive.leads_week(h, "2026-10-08"), (None, []))
+        self.assertEqual(derive.leads_week([{"date": "2026-10-01", "newCards": None}], "2026-10-01"), (None, []))
+
+    def test_snapshot_stores_a_count_without_names(self):
+        r = {"Activity Log": {"entries": [{"name": "Fake, A", "type": "Tour", "status": "Guest Card : Completed", "when": "2026-10-01 10:00"},
+                                          {"name": "Fake, B", "type": "Tour", "status": "Guest Card : Completed", "when": "2026-10-01 11:00"}]}}
+        snap = derive.snapshot(r, "2026-10-01", [], ["B Fake"])
+        self.assertEqual((snap["newCards"], snap["tours"]), (1, 2))
+        self.assertNotIn("newCards", derive.snapshot(r, "2026-10-01", [], None))  # no saved feed: left out
+        self.assertNotIn("Fake", json.dumps(snap))
+        # a re-run of the same day keeps the stored count (the saved prospects already hold today's names)
+        again = derive.snapshot(r, "2026-10-01", [{"date": "2026-10-01", "newCards": 1}], ["A Fake", "B Fake"])
+        self.assertEqual(again["newCards"], 1)
+
+    def _folder_with_cards(self, rows):
+        import shutil
+        import tempfile
+        d = tempfile.mkdtemp()
+        text = open(os.path.join(DATA, "assumed_layouts.txt")).read()
+        text = text.replace("Fakename, Bo\tUnknown\tGuest Card : Completed\t46295.6159722\tTour\tLooked at a unit\tTest Agent\n", "", 2)
+        text = text.replace("Fakename, Ada\t211", rows + "Fakename, Ada\t211", 1)
+        open(os.path.join(d, "assumed.txt"), "w").write(text)
+        shutil.copy(os.path.join(DATA, "lease_up_workbook.txt"), d)
+        return d
+
+    def test_figures_build_the_week_from_stored_counts(self):
+        import shutil
+        row = "Fakename, New\tUnknown\tGuest Card : Completed\t46295.5\tTour\tNew card\tTest Agent\n"
+        d = self._folder_with_cards(row + row.replace("New", "Newer"))
+        try:
+            prev = {"properties": [{"id": "grove", "prospects": [{"name": "Ada Fakename"}],
+                                    "history": [{"date": "2026-10-01", "newCards": 3}, {"date": "2026-09-30", "newCards": 8}]}]}
+            f = figures.build(d, "grove", "2026-10-02", property_name=LEASEUP, previous_feed=prev, as_at="2026-10-03")
+        finally:
+            shutil.rmtree(d)
+        self.assertEqual(f["snapshot"]["newCards"], 2)
+        self.assertEqual(f["leadsWeek"], 5)  # 3 on Thursday + 2 on Friday; Wednesday's 8 is last week
+        self.assertEqual(f["leadsWeekMissingDays"], [])
+        self.assertNotEqual(f["leadsWeek"], f["funnel"]["stages"][0][1] if "funnel" in f else None)  # never the Lease Term Progress count
+
+    def test_without_a_saved_feed_leads_week_is_left_out_and_said(self):
+        f = figures.build(DATA, "grove", "2026-10-01", property_name=LEASEUP)
+        self.assertNotIn("leadsWeek", f)
+        self.assertTrue(any("leadsWeek" in g for g in f["notCarried"]))
+        self.assertNotIn("newCards", f["snapshot"])
+
+    def test_funnel_since_and_until_are_last_monday_to_sunday(self):
+        f = figures.build(DATA, "grove", "2026-10-01", property_name=LEASEUP, as_at="2026-10-02")
+        self.assertEqual((f["funnel"]["since"], f["funnel"]["until"]), ("2026-09-21", "2026-09-27"))
+
+    def test_items_income_only_from_a_real_parking_charge(self):
+        import shutil
+        import tempfile
+        d = tempfile.mkdtemp()
+        try:
+            text = open(os.path.join(DATA, "stabilised_workbook.txt")).read() + "\n" + open(os.path.join(DATA, "assumed_layouts.txt")).read().replace("Test Lease-Up Building", STABLE)
+            open(os.path.join(d, "a.txt"), "w").write(text)
+            f = figures.build(d, "f47", "2026-10-01", property_name=STABLE)
+        finally:
+            shutil.rmtree(d)
+        self.assertEqual(f["items"]["income"], 400)  # the Rent Roll's Parking charge code
+        g = figures.build(DATA, "grove", "2026-10-01", property_name=LEASEUP)
+        self.assertNotIn("income", g.get("items", {}))  # no parking charge on the Rent Roll: left out, never from stall rates
 
 
 class FinancialMonth(unittest.TestCase):

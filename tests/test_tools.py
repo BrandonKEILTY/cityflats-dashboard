@@ -76,20 +76,20 @@ class FeedChecks(unittest.TestCase):
         self.assertTrue(any("not sorted" in f for f in self.fails()))
 
     def test_no_resident_names_in_notes(self):
-        names = {"f47": ["Nichols, Anne", "Smith, Callum"], "grove": ["Fakename, Ada Marie"]}
+        names = {"f47": ["Fakename, Ada", "Testname, Bo"], "grove": ["Fakename, Cy Marie"]}
         self.assertEqual(check_feed.check(self.new, self.old, names), [])
-        self.new["properties"][1]["renewals"]["note"] = "Anne Nichols (302) has already renewed."
+        self.new["properties"][1]["renewals"]["note"] = "Ada Fakename (302) has already renewed."
         f = check_feed.check(self.new, self.old, names)
-        self.assertTrue(any(x.startswith("12.") and "Nichols" in x for x in f))
+        self.assertTrue(any(x.startswith("12.") and "Fakename" in x for x in f))
         self.new = copy.deepcopy(self.old)
-        self.new["properties"][1]["workOrders"][0]["notes"] = [["2026-10-01", "Called Callum Smith about the access."]]
+        self.new["properties"][1]["workOrders"][0]["notes"] = [["2026-10-01", "Called Bo Testname about the access."]]
         self.assertTrue(any(x.startswith("12.") for x in check_feed.check(self.new, self.old, names)))
         self.new = copy.deepcopy(self.old)
-        self.new["properties"][0]["rent"]["note"] = "Lease for Fakename, Ada Marie signed."
+        self.new["properties"][0]["rent"]["note"] = "Lease for Fakename, Cy Marie signed."
         self.assertTrue(any(x.startswith("12.") for x in check_feed.check(self.new, self.old, names)))
         # names in the arrears table and prospects are allowed; a plan called Hill or a first name alone is not a name
         self.new = copy.deepcopy(self.old)
-        self.new["properties"][0]["rent"]["note"] = "The Hill plan; Anne is the property manager."
+        self.new["properties"][0]["rent"]["note"] = "The Hill plan; Ada is the property manager."
         self.assertEqual(check_feed.check(self.new, self.old, names), [])
 
     def test_renewed_suite_must_not_be_on_the_increases_list(self):
@@ -146,23 +146,51 @@ class NewFields(unittest.TestCase):
         self.new["properties"][0]["renewals"]["mtm"] = 2
         self.assertEqual(check_feed.check(self.new, self.old), [])
 
-    def test_leads_week_when_present(self):
+    def test_leads_week_must_equal_the_stored_daily_counts(self):
         p = self.new["properties"][0]
+        h = p["history"]
+        self.assertEqual(h[-1]["date"], "2026-10-01")  # a Thursday: the week starts today
+        h[-1]["newCards"] = 3
         p["leadsWeek"] = 3
         self.assertEqual(check_feed.check(self.new, self.old), [])
+        p["leadsWeek"] = 4  # not the sum of the counts
+        self.assertTrue(any(f.startswith("15.") and "add to 3" in f for f in check_feed.check(self.new, self.old)))
+        del p["leadsWeek"]  # counts exist but the feed does not use them
+        self.assertTrue(any(f.startswith("15.") and "missing" in f for f in check_feed.check(self.new, self.old)))
+
+    def test_leads_week_sums_thursday_to_dataThrough_only(self):
+        p = self.new["properties"][0]
+        h = p["history"]
+        h[-2]["newCards"] = 9  # 2026-09-30, a Wednesday: last week's
+        self.old["properties"][0]["history"][-2]["newCards"] = 9  # already stored yesterday; earlier days never change
+        h[-1]["newCards"] = 2
+        p["leadsWeek"] = 2
+        self.assertEqual(check_feed.check(self.new, self.old), [])
+        p["leadsWeek"] = 11
+        self.assertTrue(any(f.startswith("15.") for f in check_feed.check(self.new, self.old)))
+
+    def test_daily_counts_are_counts_only(self):
+        p = self.new["properties"][0]
+        for bad in (-1, 1.5, "Fake Name", ["Fake Name"], True):
+            p["history"][-1]["newCards"] = bad
+            self.assertTrue(any(f.startswith("15.") and "no names" in f for f in check_feed.check(self.new, self.old)), bad)
+
+    def test_leads_week_zero_is_valid_when_counted(self):
+        p = self.new["properties"][0]
+        p["history"][-1]["newCards"] = 0
         p["leadsWeek"] = 0
         self.assertEqual(check_feed.check(self.new, self.old), [])
         for bad in (-1, 2.5, None, "3"):
             p["leadsWeek"] = bad
             self.assertTrue(any(f.startswith("15.") for f in check_feed.check(self.new, self.old)), bad)
 
-    def test_funnel_since_when_present(self):
+    def test_funnel_since_and_until_when_present(self):
         p = self.new["properties"][0]
-        p["funnel"]["since"] = "2026-08-01"
+        p["funnel"].update(since="2026-09-21", until="2026-09-27")  # a Monday and the Sunday after
         self.assertEqual(check_feed.check(self.new, self.old), [])
-        for bad in ("08/01/2026", "2026-13", "2026-10-09", 20260801):  # the last is after dataThrough
-            p["funnel"]["since"] = bad
-            self.assertTrue(any(f.startswith("16.") for f in check_feed.check(self.new, self.old)), bad)
+        for since, until in (("2026-09-22", "2026-09-28"), ("2026-09-21", "2026-09-26"), ("2026-09-21", None), ("08/01/2026", "2026-09-27")):
+            p["funnel"].update(since=since, until=until)
+            self.assertTrue(any(f.startswith("16.") for f in check_feed.check(self.new, self.old)), (since, until))
 
     def test_items_income_when_present(self):
         p = self.new["properties"][1]
@@ -178,7 +206,8 @@ class NewFields(unittest.TestCase):
         notes = check_feed.gaps(self.new)
         self.assertTrue(any("leadsWeek" in n for n in notes))
         self.assertTrue(any("funnel.since" in n for n in notes))
-        self.assertTrue(any("items.income" in n for n in notes))
+        self.assertFalse(any("items.income" in n for n in notes))  # on hold: not even noted
+        self.new["properties"][0]["history"][-1]["newCards"] = 1
         self.new["properties"][0]["leadsWeek"] = 1
         self.assertFalse(any("grove: leadsWeek" in n for n in check_feed.gaps(self.new)))
 
@@ -269,3 +298,83 @@ class CommandCenter(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NamesOutOfGit(unittest.TestCase):
+    FEED = {"properties": [
+        {"id": "a", "arrears": {"detail": [["101", "Ada Fakename", "Current resident", 0, 0, 0, 0, 0, ""], ["Parking", "Bo Testname", "x", 0, 0, 0, 0, 0, ""]],
+                                "note": "Ada Fakename owes nothing."},
+         "prospects": [{"name": "Cy Placeholder", "entries": [["2026-10-01 10:00", "Tour", "Toured with Cy Placeholder."]]}],
+         "renewals": {"note": "Suite 302 has renewed."}},
+        {"id": "b", "arrears": {"detail": []}, "prospects": [{"name": "Dee Invented", "entries": []}]}]}
+
+    def test_names_become_placeholders_and_the_shape_stays(self):
+        from tools import anonymise_feed
+        out, mapping = anonymise_feed.anonymise_feed(self.FEED, ["Fakename, Ada", "Extra, Eve"])
+        a, b = out["properties"]
+        self.assertEqual([r[1] for r in a["arrears"]["detail"]], ["Resident 1", "Resident 2"])
+        self.assertEqual(a["arrears"]["note"], "Resident 1 owes nothing.")
+        self.assertEqual([p["name"] for p in a["prospects"]], ["Prospect 1"])
+        self.assertEqual(a["prospects"][0]["entries"][0][2], "Toured with Prospect 1.")
+        self.assertEqual(b["prospects"][0]["name"], "Prospect 2")
+        self.assertEqual(a["renewals"], {"note": "Suite 302 has renewed."})  # nothing else changes
+        self.assertEqual(set(mapping.values()), {"Resident 1", "Resident 2", "Resident 3", "Prospect 1", "Prospect 2"})
+        self.assertEqual(json.loads(json.dumps(out)).keys(), self.FEED.keys())
+
+    def test_the_same_person_in_two_forms_gets_one_placeholder(self):
+        from tools import anonymise_feed
+        m = anonymise_feed.placeholders(["Ada Fakename"], [], ["Fakename, Ada Marie", "Extra, Eve"])
+        self.assertEqual(m["Ada Fakename"], m["Fakename, Ada Marie"])
+        self.assertEqual(m["Extra, Eve"], "Resident 2")
+        text = anonymise_feed.replace_names("Fakename, Ada Marie and Ada Fakename and Eve Extra.", m)
+        self.assertEqual(text, "Resident 1 and Resident 1 and Resident 2.")
+
+    def test_the_check_finds_a_name_in_any_file_and_passes_once_removed(self):
+        import tempfile
+        from tools import anonymise_feed, check_repo_names
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "feed.json")
+        json.dump(self.FEED, open(path, "w"))
+        names = check_repo_names.collect_names(names_files=[])
+        json.dump(["Fakename, Ada", "Testname, Bo", "Placeholder, Cy"], open(os.path.join(d, "n.json"), "w"))
+        names = check_repo_names.collect_names(names_files=[os.path.join(d, "n.json")])
+        bad = check_repo_names.check_paths([path], names)
+        self.assertEqual([p for p, _ in bad], [path])
+        out, _ = anonymise_feed.anonymise_feed(self.FEED, ["Fakename, Ada"])
+        json.dump(out, open(path, "w"))
+        self.assertEqual(check_repo_names.check_paths([path], names), [])
+        # a last name or a first name on its own is not a hit
+        open(path, "w").write("The Hill plan. Ada is the manager. Fakename Road.")
+        self.assertEqual(check_repo_names.check_paths([path], names), [])
+        # the names can also come from an un-anonymised feed
+        json.dump(self.FEED, open(os.path.join(d, "raw.json"), "w"))
+        from_feed = check_repo_names.collect_names(feed=os.path.join(d, "raw.json"))
+        self.assertIn("Cy Placeholder", from_feed)
+
+    def test_history_lists_commits_that_held_a_name(self):
+        import subprocess
+        import tempfile
+        from tools import check_repo_names
+        d = tempfile.mkdtemp()
+        run = lambda *a: subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t"] + list(a), cwd=d, check=True, capture_output=True)
+        run("init", "-q")
+        open(os.path.join(d, "a.txt"), "w").write("Ada Fakename owes rent\\n")
+        run("add", "."); run("commit", "-q", "-m", "first")
+        open(os.path.join(d, "a.txt"), "w").write("Resident 1 owes rent\\n")
+        run("commit", "-q", "-am", "second")
+        here = os.getcwd()
+        os.chdir(d)
+        try:
+            found = check_repo_names.history(["Fakename, Ada"])
+        finally:
+            os.chdir(here)
+        self.assertEqual([(s, f) for _, _, s, f in found], [("first", ["a.txt"])])  # only the commit that held it
+
+    def test_the_committed_files_hold_no_names(self):
+        """Skipped unless a names list is supplied: NAMES_FILE=names.json python -m unittest ..."""
+        path = os.environ.get("NAMES_FILE")
+        if not path or not os.path.exists(path):
+            self.skipTest("no NAMES_FILE")
+        from tools import check_repo_names
+        names = check_repo_names.collect_names(names_files=[path])
+        self.assertEqual(check_repo_names.check_paths(check_repo_names.tracked_files(), names), [])

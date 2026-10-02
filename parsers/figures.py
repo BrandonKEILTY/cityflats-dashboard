@@ -13,6 +13,10 @@ from . import activity_log, derive, registry
 MODES = {"grove": "leaseup", "f47": "stabilised"}
 
 
+def income_missing(out):
+    return "income" not in out.get("items", {})
+
+
 def build(folder, prop_id, data_through, property_name=None, previous_feed=None, as_at=None):
     r = registry.load(folder, prop_id, property_name)
     mode = MODES[prop_id]
@@ -50,7 +54,7 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
         out["concessions"] = derive.concessions(r["Concessions"], rr)
     if r["Rentable Items Availability"]:
         out["items"] = derive.parking(r["Rentable Items Availability"])
-        income = derive.parking_income(rr) if rr else None
+        income = derive.parking_income(rr) if rr else None  # a real parking charge on the Rent Roll only; never stall rates
         if income is not None:
             out["items"]["income"] = income
     if r["Income Statement - Budget vs Actual"] and r["Income Statement - Trailing 12"]:
@@ -62,12 +66,27 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
         out["workOrders"] = derive.open_work_orders(r["Work Order Details"])
     if al is not None:
         out["activity"] = {"date": r["Activity Log"].get("activity_date"), "entries": al}
-    out["snapshot"] = derive.snapshot(r, data_through)
-    # Fields the page can show but today's reports do not carry. Left out of the feed, never estimated.
-    gaps = ["leadsWeek: the Activity Log lists Notes and Tours only, with no guest card created activity, and covers one day",
-            "funnel.since: the Lease Term Progress Summary shows only an as-of date, not the start of its period"]
-    if rr and derive.parking_income(rr) is None:
-        gaps.append("items.income: the Rent Roll carries no parking charge codes")
+    prev = next((p for p in (previous_feed or {}).get("properties", []) if p["id"] == prop_id), {})
+    prev_history = prev.get("history", []) or []
+    known = [q["name"] for q in prev["prospects"]] if isinstance(prev.get("prospects"), list) else None
+    out["snapshot"] = derive.snapshot(r, data_through, prev_history, known)
+    # New leads this week: the sum of the stored daily counts of guest cards created, Thursday through data_through.
+    full = [s for s in prev_history if s.get("date") != data_through] + [out["snapshot"]]
+    total, missing_days = derive.leads_week(full, data_through)
+    gaps = []
+    if total is not None:
+        out["leadsWeek"] = total
+        out["leadsWeekMissingDays"] = missing_days  # days this week with no stored count; name them in the summary
+    else:
+        gaps.append("leadsWeek: the Activity Log gave no reliable count of new guest cards yet (no saved feed to compare with, or no log), so it is left out (the page shows a dash)")
+    if "funnel" in out:  # the report is set to last week, Monday to Sunday: both dates come from the run date
+        out["funnel"]["since"], out["funnel"]["until"] = derive.last_week(as_at or derive.add_days(data_through, 1))
+    if rr:  # for the summary: the parking code(s) the income came from, or every code the Charge Code Summary shows
+        names = [c["name"] for c in rr.get("charge_codes", [])]
+        out["parkingCodes"] = [n for n in names if "parking" in (n or "").lower()]
+        out["chargeCodesSeen"] = names
+        if income_missing(out):
+            gaps.append("items.income: no parking charge code in the Rent Roll's Charge Code Summary, so it is left out; codes shown: " + (", ".join(names) or "none"))
     out["notCarried"] = gaps
     return out
 

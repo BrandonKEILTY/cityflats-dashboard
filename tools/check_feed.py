@@ -37,7 +37,8 @@ def add_months(iso, n):
 
 def name_patterns(name):
     """Patterns for one person written 'Last, First Middle' (as Entrata does) or 'First Last' (as the feed does).
-    Last name alone is not matched: plan names and ordinary words share them."""
+    The full spelling comes first, so a replacement takes the middle names with it; then the first word of the first
+    name with the last name. Last name alone is not matched: plan names and ordinary words share them."""
     name = " ".join(name.split())
     if "," in name:
         last, first = [x.strip() for x in name.split(",", 1)]
@@ -49,8 +50,12 @@ def name_patterns(name):
     ft = first.split()[0] if first else ""
     if not ft or not last or len(ft) < 2 or len(last) < 3:
         return []
-    return [re.compile(rf"\b{re.escape(ft)}\s+(?:[\w.'-]+\s+){{0,2}}{re.escape(last)}\b", re.I),
-            re.compile(rf"\b{re.escape(last)},\s*{re.escape(ft)}\b", re.I)]
+    pats = []
+    if len(first.split()) > 1:
+        pats += [re.compile(rf"\b{re.escape(first)}\s+{re.escape(last)}\b", re.I), re.compile(rf"\b{re.escape(last)},\s*{re.escape(first)}\b", re.I)]
+    pats += [re.compile(rf"\b{re.escape(ft)}\s+(?:[\w.'-]+\s+){{0,2}}{re.escape(last)}\b", re.I),
+             re.compile(rf"\b{re.escape(last)},\s*{re.escape(ft)}\b", re.I)]
+    return pats
 
 
 def known_names(prop, rent_roll_names):
@@ -76,6 +81,13 @@ def name_hits(prop, rent_roll_names):
                     hits.append((path, n, text))
                     break
     return hits
+
+
+def week_start(iso):
+    """The Thursday on or before iso (the week runs Thursday to Wednesday)."""
+    from datetime import date, timedelta
+    d = date.fromisoformat(iso)
+    return (d - timedelta(days=(d.weekday() - 3) % 7)).isoformat()
 
 
 def check(new, old, names=None, renewed=None):
@@ -164,13 +176,41 @@ def check(new, old, names=None, renewed=None):
         mtm = (p.get("renewals") or {}).get("mtm")
         if not (isinstance(mtm, int) and not isinstance(mtm, bool) and mtm >= 0):
             fails.append(f"14. {pid}: renewals.mtm must be a count of month-to-month leases, 0 if none (got {mtm!r})")
+        # New leads this week = the sum of the stored daily counts (history[].newCards, counts only) from Thursday
+        # through dataThrough. Left out of the feed while no day has a count.
+        for s in p.get("history", []):
+            if "newCards" in s and not (isinstance(s["newCards"], int) and not isinstance(s["newCards"], bool) and s["newCards"] >= 0):
+                fails.append(f"15. {pid}: history {s.get('date')} newCards must be a whole number, 0 or more, with no names (got {s['newCards']!r})")
+        wk_start = week_start(new["dataThrough"])
+        counts_in_week = [s["newCards"] for s in p.get("history", []) if "newCards" in s and wk_start <= s.get("date", "") <= new["dataThrough"]
+                          and isinstance(s["newCards"], int)]
         if "leadsWeek" in p:
             lw = p["leadsWeek"]
             if not (isinstance(lw, int) and not isinstance(lw, bool) and lw >= 0):
                 fails.append(f"15. {pid}: leadsWeek must be a whole number of guest cards, 0 or more (got {lw!r})")
-        since = (p.get("funnel") or {}).get("since")
-        if since is not None and not (ISO.match(str(since)) and str(since) <= new["dataThrough"]):
-            fails.append(f"16. {pid}: funnel.since must be a YYYY-MM-DD date on or before dataThrough (got {since!r})")
+            elif lw != sum(counts_in_week):
+                fails.append(f"15. {pid}: leadsWeek is {lw} but the daily counts from {wk_start} to {new['dataThrough']} add to {sum(counts_in_week)}")
+        elif counts_in_week:
+            fails.append(f"15. {pid}: leadsWeek is missing although daily counts exist for the week from {wk_start}")
+        # funnel.since / funnel.until: the Lease Term Progress report covers last week, Monday to Sunday.
+        fn = p.get("funnel") or {}
+        since, until = fn.get("since"), fn.get("until")
+        if since is not None or until is not None:
+            from datetime import date, timedelta
+            try:
+                d0 = date.fromisoformat(str(since))
+                d1 = date.fromisoformat(str(until))
+                if not (ISO.match(str(since)) and ISO.match(str(until))):
+                    raise ValueError
+            except (ValueError, TypeError):
+                fails.append(f"16. {pid}: funnel.since and funnel.until must both be YYYY-MM-DD dates (got {since!r}, {until!r})")
+            else:
+                if d0.weekday() != 0:
+                    fails.append(f"16. {pid}: funnel.since {since} is not a Monday")
+                if d1 != d0 + timedelta(days=6):
+                    fails.append(f"16. {pid}: funnel.until {until} is not funnel.since + 6 days")
+                if str(until) > new["dataThrough"]:
+                    fails.append(f"16. {pid}: funnel.until {until} is after dataThrough")
         income = (p.get("items") or {}).get("income")
         if "income" in (p.get("items") or {}) and not (isinstance(income, (int, float)) and not isinstance(income, bool) and income >= 0):
             fails.append(f"17. {pid}: items.income must be a number of dollars a month, 0 or more (got {income!r})")
@@ -204,9 +244,7 @@ def gaps(new):
         if "leadsWeek" not in p:
             out.append(f"{p['id']}: leadsWeek not in the feed (the page shows a dash for New leads)")
         if (p.get("funnel") or {}).get("since") is None:
-            out.append(f"{p['id']}: funnel.since not in the feed")
-        if "income" not in (p.get("items") or {}):
-            out.append(f"{p['id']}: items.income not in the feed")
+            out.append(f"{p['id']}: funnel.since and funnel.until not in the feed")
     return out
 
 
