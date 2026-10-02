@@ -1,25 +1,35 @@
-"""Income Statement - Trailing 12: 13 monthly columns, newest first."""
+"""Income Statement - Trailing 12, from the Excel text. LAYOUT_CHECKED: yes (Grove and Faculty47 workbooks).
+The sheet has no section headings, only accounts and a few subtotals; the run needs the Net Operating Income row."""
 import re
 
-from .common import read_lines, header_info, num
+from . import xlsxtext as x
 
-VAL = r"\(?-?[\d,]+\.\d\d\)?"
-MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}"
+LAYOUT_CHECKED = True
+KEY = "income statement - trailing 12"
 MONTHS = {m: i + 1 for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
 
 
-def parse(path):
-    lines = read_lines(path)
-    out = {"report": "Income Statement - Trailing 12", **header_info(lines), "months": [], "rows": []}
-    for ln in lines:
-        s = ln.strip()
-        if s.startswith("Account Account Name Total"):
-            ms = re.findall(MONTH, s)
-            out["months"] = [f"{m[4:]}-{MONTHS[m[:3]]:02d}" for m in ms]
+def parse(lines):
+    info = x.title_info(lines)
+    rows = [x.cells(l) for l in lines]
+    h = x.header_index(rows, "Account Name", "Total")
+    hdr = rows[h]
+    cols = x.columns(hdr)
+    first_month = x.col(cols, "total") + 1
+    months = []
+    for c in hdr[first_month:]:
+        m = re.fullmatch(r"([A-Z][a-z]{2}) (\d{4})", c.strip())
+        if not m:
+            break
+        months.append(f"{m.group(2)}-{MONTHS[m.group(1)]:02d}")
+    out = {"report": "Income Statement - Trailing 12", **info, "months": months, "rows": []}
+    name_i = x.col(cols, "account name")
+    for r in rows[h + 1:]:
+        name = x.get(r, name_i)
+        if not name or x.get(r, x.col(cols, "total")) == "":
             continue
-        m = re.match(r"^(?:(?P<code>\d{3}-\d{3}) )?(?P<name>[A-Za-z&,' -]+?) (?P<vals>(?:" + VAL + r" ?)+)$", s)
-        if m and out["months"]:
-            vals = [num(x) for x in re.findall(VAL, m["vals"])]
-            if len(vals) == len(out["months"]) + 1:
-                out["rows"].append({"code": m["code"], "name": m["name"].strip(), "total": vals[0], "by_month": dict(zip(out["months"], vals[1:]))})
+        vals = [x.num(x.get(r, first_month + i)) or 0 for i in range(len(months))]
+        out["rows"].append({"code": None, "name": name, "total": x.num(x.get(r, x.col(cols, "total"))), "by_month": dict(zip(months, vals))})
+    if not any(r["name"] == "Net Operating Income" for r in out["rows"]):
+        raise x.LayoutError("trailing 12: Net Operating Income row not found")
     return out

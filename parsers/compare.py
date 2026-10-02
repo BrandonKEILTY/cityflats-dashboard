@@ -7,7 +7,11 @@ Prints every difference. It never decides which side is right.
 import argparse
 import json
 
+import glob
+import os
+
 from . import activity_log, derive, registry
+from .pdf import registry as pdf_registry
 
 
 def _approx(a, b):
@@ -19,7 +23,7 @@ def _approx(a, b):
 def run(folder, prop_id, feed_path, snapshot=None):
     feed = json.load(open(feed_path))
     p = next(x for x in feed["properties"] if x["id"] == prop_id)
-    r = registry.load(folder)
+    r = registry.load(folder, prop_id) if glob.glob(os.path.join(folder, '*.txt')) else pdf_registry.load(folder)
     diffs, notes = [], []
 
     def d(section, key, parsed, feed_val):
@@ -52,8 +56,8 @@ def run(folder, prop_id, feed_path, snapshot=None):
             else:
                 d("deals", u + " rent", mine[u]["rent"], fd[u]["rent"])
                 d("deals", u + " move-in", mine[u]["movein"][:10], str(fd[u]["movein"])[:10])
-        rt, fr = derive.rent(rr, av), p["rent"]
-        for k in ("committed", "committedCount", "signed", "signedCount", "inPlace", "occupiedCount", "futureRent", "fullBudget", "fullCount", "avgSuite"):
+        rt, fr = derive.rent(rr, av, p["mode"]), p["rent"]
+        for k in ("committed", "committedCount", "signed", "signedCount", "signedBudget", "lossToLease", "inPlace", "occupiedCount", "futureRent", "fullBudget", "fullCount", "avgSuite", "avgSqft"):
             if k in fr:
                 d("rent", k, rt.get(k), fr[k])
         rn = derive.renewals(rr, r["Expiring Leases"])
@@ -125,11 +129,17 @@ def run(folder, prop_id, feed_path, snapshot=None):
         d("budget", "annualNoi", b["annualNoi"], fb["annualNoi"])
         d("budget", "noiMonths", b["noiMonths"], fb["noiMonths"])
         d("budget", "noiTrend", b["noiTrend"], fb["noiTrend"])
-        flines = sorted(tuple(x[1:]) for x in fb["lines"])
-        pl = [t for t in b["lines"]]
-        for t in flines:
-            if not any(all(_approx(a, c) for a, c in zip(t, q)) for q in pl):
-                diffs.append(("budget", "feed line not found in report", None, list(t)))
+        mine = {l[0]: l[1:] for l in b["lines"]}
+        for lab, *vals in fb["lines"]:
+            if lab not in mine:
+                diffs.append(("budget lines", lab, None, vals))
+            elif not all(_approx(a, c) for a, c in zip(vals, mine[lab])):
+                diffs.append(("budget lines", lab, mine[lab], vals))
+        for lab in mine:
+            if lab not in {l[0] for l in fb["lines"]}:
+                diffs.append(("budget lines", lab, mine[lab], None))
+        if b["unknownHeadings"]:
+            notes.append(f"budget headings with no label in the table: {b['unknownHeadings']}")
     if r["Work Order Details"]:
         all_wo = r["Work Order Details"]["orders"]
         wo = {o["ref"]: o for o in derive.open_work_orders(r["Work Order Details"])}

@@ -1,33 +1,33 @@
-"""Income Statement - Budget vs Actual (month and year to date)."""
-import re
+"""Income Statement - Budget vs Actual, from the Excel text. LAYOUT_CHECKED: yes (Grove and Faculty47 workbooks).
 
-from .common import read_lines, header_info, num
+Columns are read by position after 'Account Name': month actual, budget, $ variance, % variance,
+actual vs prior year, then year-to-date actual, budget, $ variance, % variance, YTD (prior year), annual budget."""
+from . import xlsxtext as x
 
-VAL = r"\(?-?[\d,]+\.\d\d\)?%?"
+LAYOUT_CHECKED = True
+KEY = "income statement - budget vs actual"
 COLS = ["actual", "budget", "var", "var_pct", "vs_prior_year", "ytd_actual", "ytd_budget", "ytd_var", "ytd_var_pct", "ytd_prior", "annual_budget"]
-ACCOUNT = re.compile(r"^(?P<prop>.+?) (?P<code>\d{3}-\d{3}) (?P<name>.+?) (?P<vals>(?:" + VAL + r" ?){11})$")
-GROUP = re.compile(r"^(?P<name>[A-Za-z&,' ]+?) (?P<vals>(?:" + VAL + r" ?){11})$")
 
 
-def _vals(s):
-    return dict(zip(COLS, (num(x) for x in re.findall(VAL, s))))
-
-
-def parse(path):
-    lines = read_lines(path)
-    info = header_info(lines)
-    out = {"report": "Income Statement - Budget vs Actual", **info, "period": lines[2].strip() if len(lines) > 2 else None, "groups": [], "accounts": []}
+def parse(lines):
+    info = x.title_info(lines)
+    rows = [x.cells(l) for l in lines]
+    h = x.header_index(rows, "Property", "Account", "Account Name", "Actual", "Budget")
+    start = x.col(x.columns(rows[h]), "account name") + 1
+    out = {"report": "Income Statement - Budget vs Actual", **info, "groups": [], "accounts": []}
     cur = None
-    for ln in lines:
-        s = ln.strip()
-        m = ACCOUNT.match(s)
-        if m:
-            out["accounts"].append({"group": cur, "code": m["code"], "name": m["name"].strip(), **_vals(m["vals"])})
+    for r in rows[h + 1:]:
+        nonblank = [c for c in r if c.strip()]
+        if not nonblank:
             continue
-        m = GROUP.match(s)
-        if m:
-            out["groups"].append({"name": m["name"].strip(), **_vals(m["vals"])})
-            continue
-        if re.fullmatch(r"[A-Za-z&,' ]+", s) and s not in ("Accrual Basis",):
-            cur = s
+        name = x.get(r, 2)
+        vals = {k: x.num(x.get(r, start + i)) for i, k in enumerate(COLS)}
+        if len(nonblank) == 1:  # section heading, e.g. "Payroll"
+            cur = nonblank[0].strip()
+        elif x.get(r, 1):  # account row: property, code, name, figures
+            out["accounts"].append({"group": cur, "code": x.get(r, 1), "name": name, **vals})
+        elif name:  # group total, e.g. "Payroll" or "Net Operating Income"
+            out["groups"].append({"name": name, **vals})
+    if not any(g["name"] == "Net Operating Income" for g in out["groups"]):
+        raise x.LayoutError("budget vs actual: Net Operating Income row not found")
     return out

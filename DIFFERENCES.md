@@ -23,7 +23,7 @@ The four fixture zips are Entrata exports from 2026-09-30 evening (Grove 18:13, 
 
 ## Still to do
 
-- The parsers read PDF files, but the Outlook connector returned the attachments as text on 2026-10-02. See "Open problem" in `README-for-Claude-Code.md`.
+- **Superseded:** the tables below compare the old PDF readers (`parsers/pdf`) with the feed. The routine now reads Excel text instead (see `ROUTINE.md`), because the connector flattens PDFs. The rulings above carry over unchanged. The Excel readers have their own tests (`tests/test_xlsx.py`); five of them are written from the PDF headings only and are marked unchecked until a real Command Center Excel export has been run through them.
 - Not covered by the parsers yet: `inventory.plans`, `rent.avgSqft`, `rent.signedBudget`, `lossToLease`, `budget.lines` labels, `weeklyChecklist`.
 
 

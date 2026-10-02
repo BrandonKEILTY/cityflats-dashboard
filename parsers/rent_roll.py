@@ -1,95 +1,76 @@
-"""Rent Roll (Current Post Month).
+"""Rent Roll, from the Excel text. LAYOUT_CHECKED: yes (Grove and Faculty47 workbooks)."""
+from . import xlsxtext as x
 
-Returns every suite, the future residents, and for Faculty47 the current residents.
-Status rules (leased vs in progress) live in derive.py, not here.
-"""
-import re
-
-from .common import NUM, num, read_lines, header_info
-
-SUITE = re.compile(r"^(?P<unit>\d{3}[A-Z]?) (?P<type>.+?) (?P<sqft>[\d,]+\.\d\d) (?P<rest>.+)$")
-STATUS = re.compile(r"^(Vacant (?:Rented|Unrented) Ready|Excluded ?-? ?Model Unit|Occupied(?: No Notice| Notice(?: Rented| Unrented)?)?)\s*(?P<tail>.*)$")
-NUMS = re.compile(NUM)
-DATES = re.compile(r"\d{4}-\d\d-\d\d")
+LAYOUT_CHECKED = True
+KEY = "rent roll"
 
 
-def _split_tail(tail):
-    """tail = resident name + amounts + dates. Returns name, amounts, dates."""
-    dates = DATES.findall(tail)
-    first_amt = re.search(NUM, tail)
-    name = tail[: first_amt.start()].strip() if first_amt else tail.strip()
-    amounts = [num(a) for a in NUMS.findall(DATES.sub("", tail))]
-    return name, amounts, dates
+def _status(s):
+    return s.strip()
 
 
-def parse(path):
-    lines = read_lines(path)
-    out = {"report": "Rent Roll", **header_info(lines), "suites": [], "future": [], "status_summary": {}, "totals": {}}
-    section = None
-    for ln in lines:
-        s = ln.strip()
-        if s.startswith("Unit Details"):
-            section = "unit"
+def parse(lines):
+    info = x.title_info(lines)
+    rows = [x.cells(l) for l in lines]
+    out = {"report": "Rent Roll", **info, "suites": [], "future": [], "status_summary": {}, "totals": {}}
+    section, cols = None, None
+    last_future = None
+    for r in rows:
+        first = r[0].strip() if r else ""
+        if first == "Unit Details":
+            section, cols = "unit", None
             continue
-        if s.startswith("Status Summary") and section == "unit":
+        if first == "Status Summary":
             section = "summary"
             continue
-        if s.startswith("Future Resident Details"):
-            section = "future"
+        if first.startswith("Average Charges by Unit Type"):
+            section = "avg"
             continue
-        if s.startswith("Rent Roll 4.") or s.startswith("Bldg-Unit") or s.startswith("Rent Roll -"):
+        if first == "Future Resident Details":
+            section, cols = "future", None
             continue
-        if section == "unit":
-            if s.startswith("Total:"):
-                out["totals"]["unit_details"] = [num(a) for a in NUMS.findall(s)]
+        if section in ("unit", "future") and first == "Bldg-Unit":
+            cols = x.columns(r)
+            continue
+        if section == "unit" and cols:
+            if "total" in x.get(r, 1).lower():
+                out["totals"]["unit_details"] = [x.num(c) for c in r[2:] if c.strip()]
                 continue
-            m = SUITE.match(s)
-            if not m:
+            if not first:
                 continue
-            sm = STATUS.match(m["rest"])
-            if not sm:
-                continue
-            status = sm.group(1)
-            tail = sm["tail"]
-            resident = None
-            if "-- Vacant --" in tail:
-                tail = tail.replace("-- Vacant --", "").strip()
-                amounts = [num(a) for a in NUMS.findall(tail)]
-                row = {"unit": m["unit"], "type": m["type"], "sqft": num(m["sqft"]), "status": status, "resident": None,
-                       "budget_rent": amounts[0] if amounts else None}
-            else:
-                name, amounts, dates = _split_tail(tail)
-                # occupied: budgeted, scheduled, balance, deposit held, then dates
-                row = {"unit": m["unit"], "type": m["type"], "sqft": num(m["sqft"]), "status": status, "resident": name,
-                       "budget_rent": amounts[0], "scheduled": amounts[1], "balance": amounts[2], "deposit": amounts[3] if len(amounts) > 3 else None,
-                       "move_in": dates[0] if dates else None, "lease_start": dates[1] if len(dates) > 1 else None,
-                       "lease_end": dates[2] if len(dates) > 2 else None}
+            resident = x.get(r, x.col(cols, "resident"))
+            status = _status(x.get(r, x.col(cols, "unit status")))
+            row = {"unit": first, "type": x.get(r, x.col(cols, "unit type")), "sqft": x.num(x.get(r, x.col(cols, "sqft"))),
+                   "status": status, "resident": None if resident.startswith("-- Vacant") else resident,
+                   "budget_rent": x.num(x.get(r, x.col(cols, "budgeted rent")))}
+            if row["resident"]:
+                row.update({"scheduled": x.num(x.get(r, x.col(cols, "scheduled charges"))), "balance": x.num(x.get(r, x.col(cols, "balance"))),
+                            "deposit": x.num(x.get(r, x.col(cols, "deposit held"))), "move_in": x.date(x.get(r, x.col(cols, "move-in"))),
+                            "lease_start": x.date(x.get(r, x.col(cols, "lease start"))), "lease_end": x.date(x.get(r, x.col(cols, "lease end")))})
             out["suites"].append(row)
         elif section == "summary":
-            m = re.match(r"^(Occupied No Notice|Total Occupied Units|Vacant Rented Ready|Vacant Unrented Ready|Total Vacant Units|Total Rentable Units|Excluded - Model Unit|Total Excluded Units|Total Units) (\d+) ", s)
-            if m:
-                out["status_summary"][m.group(1)] = int(m.group(2))
-        elif section == "future":
-            if s.startswith("Total:"):
-                out["totals"]["future"] = [num(a) for a in NUMS.findall(s)]
+            if first and first != "Description" and len(r) > 1 and r[1].strip():
+                try:
+                    out["status_summary"][first] = int(float(r[1]))
+                except ValueError:
+                    pass
+        elif section == "future" and cols:
+            if "total" in x.get(r, 1).lower():
+                out["totals"]["future"] = [x.num(c) for c in r[2:] if c.strip()]
                 continue
-            m = SUITE.match(s)
-            if m:
-                sm = STATUS.match(m["rest"])
-                unit, ptype, sqft, tail = m["unit"], m["type"], num(m["sqft"]), sm["tail"] if sm else m["rest"]
-            else:
-                if out["future"] and re.match(r"^[^\d(]+?,? .*\d", s):
-                    unit, ptype, sqft, tail = out["future"][-1]["unit"], out["future"][-1]["type"], out["future"][-1]["sqft"], s
-                else:
-                    continue
-            name, amounts, dates = _split_tail(tail)
-            # market rent, scheduled charges, balance, [deposit held]; dates: move in, lease start, lease end
-            if len(amounts) == 2:  # second resident on a suite: no scheduled charge
-                amounts = [amounts[0], None, amounts[1], None]
-            elif len(amounts) == 3:
-                amounts.append(None)
-            out["future"].append({"unit": unit, "type": ptype, "sqft": sqft, "resident": name, "market_rent": amounts[0],
-                                  "scheduled": amounts[1], "balance": amounts[2], "deposit": amounts[3],
-                                  "move_in": dates[0] if dates else None, "lease_start": dates[1] if len(dates) > 1 else None,
-                                  "lease_end": dates[2] if len(dates) > 2 else None})
+            unit = first or (last_future["unit"] if last_future else "")
+            resident = x.get(r, x.col(cols, "resident"))
+            if not resident:
+                continue
+            base = last_future if not first and last_future else {}
+            f = {"unit": unit, "type": x.get(r, x.col(cols, "unit type")) or base.get("type"),
+                 "sqft": x.num(x.get(r, x.col(cols, "sqft"))) if x.get(r, x.col(cols, "sqft")) else base.get("sqft"),
+                 "resident": resident, "market_rent": x.num(x.get(r, x.col(cols, "market rent"))),
+                 "scheduled": x.num(x.get(r, x.col(cols, "scheduled charges"))), "balance": x.num(x.get(r, x.col(cols, "balance"))),
+                 "deposit": x.num(x.get(r, x.col(cols, "deposit held"))), "move_in": x.date(x.get(r, x.col(cols, "move-in"))),
+                 "lease_start": x.date(x.get(r, x.col(cols, "lease start"))), "lease_end": x.date(x.get(r, x.col(cols, "lease end")))}
+            out["future"].append(f)
+            last_future = f
+    if not out["suites"]:
+        raise x.LayoutError("rent roll: no suites found")
     return out

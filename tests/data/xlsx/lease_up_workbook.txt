@@ -1,0 +1,92 @@
+=== Sheet: Rent Roll - Cityflats ===
+Rent Roll - Cityflats
+Test Lease-Up Building
+Sep 2026
+Unit Details
+Bldg-Unit	Unit Type	SQFT	Unit Status	Resident	Budgeted Rent	Scheduled Charges	Balance	Deposit Held	Move-In	Lease Start	Lease End	Expected Move-Out
+101	View	551	Vacant Rented Ready	-- Vacant --	1700	0
+102	Wood	551	Vacant Rented Ready	-- Vacant --	1700	0
+103	Hill	756	 Excluded -Model Unit	-- Vacant --	2500	0		0
+104	Brook	479	Vacant Unrented Ready	-- Vacant --	1313	0		0
+105	Brook	479	Vacant Rented Ready	-- Vacant --	1313	0
+	 Total:	2337			8526	0		0
+Status Summary			Charge Code Summary
+Description	Unit Count	Percent	Charge Code	Scheduled	Charge Code Type
+Vacant Rented Ready	3	0.6
+Vacant Unrented Ready	1	0.2
+Total Rentable Units	4	1
+Excluded - Model Unit	1	0.2
+Total Units	5	1
+Average Charges by Unit Type Summary
+Unit Type	Rentable Units	Occupied Units	Market Rent	Scheduled Charges
+View	1	0
+Future Resident Details
+Bldg-Unit	Unit Type	SQFT	Unit Status	Resident	Market Rent	Scheduled Charges	Balance	Deposit Held	Move-In	Lease Start	Lease End
+101	View	551	Vacant Rented Ready	Fakename, Ada	1700	1700		0	46388	46388	46749
+				Fakename, Bo		1700		0	46447	46447	46811
+102	Wood	551	Vacant Rented Ready	Fakename, Cy	1700	1700	0	1700	46414	46414	46778
+105	Brook	479	Vacant Rented Ready	Fakename, Di	1313	1313	-1313	0	46388	46388	46749
+	 Total:	1581			4713	-1313	1700
+
+=== Sheet: Income Statement - Trailing 12 ===
+Income Statement - Trailing 12 - CityFlats
+Test Lease-Up Building
+Accrual Basis
+Oct 2025 - Oct 2026
+Account Name	Total	Oct 2026	Sep 2026	Aug 2026	Jul 2026	Jun 2026	May 2026	Apr 2026	Mar 2026	Feb 2026	Jan 2026	Dec 2025	Nov 2025	Oct 2025		Income Statement: Property
+Interest on LMR Bank	13.21	0	7.61	3.7	1.9	0	0	0	0	0	0	0	0	0				4
+Net Operating Income	-205737.73	-1495.89	-36849.240000000005	-24994.179999999997	-26190.969999999998	-20770.08	-26819.68	-16897.32	-26529.029999999995	-12635.38	-12555.96	0	0	0				4
+Net Income	-205737.73	-1495.89	-36849.240000000005	-24994.18	-26190.97	-20770.08	-26819.68	-16897.32	-26529.03	-12635.38	-12555.96	0	0	0
+
+=== Sheet: Income Statement - Budget vs Ac ===
+Income Statement - Budget vs Actual Test
+Test Lease-Up Building
+Sep 2026
+Accrual Basis
+			Sep 2026					YTD ( Jan 2026 - Sep 2026 )
+Property	Account	Account Name	Actual	Budget	$ Variance	% Variance	Actual vs Prior Year	Actual	Budget	$ Variance	% Variance	YTD ( 2025 )	Annual Budget
+Other Income
+Test Lease-Up Building	740-100	Interest on LMR Bank	7.61	0	7.61	1		13.21	0	13.21	1	0	0
+		Other Income	7.61	0	7.61	1	7.61	13.21	0	13.21	1	0	0
+		Effective Gross Income	7.61	0	7.61	1	7.61	13.21	0	13.21	1	0	0
+Payroll
+Test Lease-Up Building	800-300	Base Salaries - Admin	5061.56	5000	-61.56	-0.012312		45554.04	40000	-5554.04	-0.138851	0	58400
+		Payroll	5600.96	5600	-0.9599999999999795	-0.00017	-5600.96	50408.64	44800	-5608.639999999999	-0.1251	0	65408
+Surprise Heading
+Test Lease-Up Building	900-100	Something New	10	5	-5	-1		20	10	-10	-1	0	30
+		Surprise Heading	10	5	-5	-1	-10	20	10	-10	-1	0	30
+		Net Operating Income	-36849.240000000005	-27478.17	-9371.069999999998	-0.34	-36849.24	-204241.84000000003	-297508.53	93266.68999999999	0.31	0	-375601.04000000004
+		Net Income	-36849.24	-27478.17	-9371.07	-0.34	-36849.24	-204241.84	-297508.53	93266.69	0.31	0	-375601.04
+
+=== Sheet: Resident Aged Receivables - Cit ===
+Resident Aged Receivables - CityFlats
+Test Lease-Up Building
+Sep 2026
+Bldg-Unit	Resident	Lease Status	Unallocated Charges / Credits	0-30 Days	31-60 Days	61-90 Days	90+ Days	Pre-Payments	Balance	Last Delinquency Note
+102	Fakename, Cy	Future	279.45	279.45	0	0	0	-279.45	0
+105	Fakename, Di	Future	0	0	0	0	0	-1313	-1313
+		Test Lease-Up Building Total:	279.45	279.45	0	0	0	-1592.45	-1313
+
+=== Sheet: Concessions - CityFlats ===
+Concessions - CityFlats
+Test Lease-Up Building
+Sep 2026
+Resident Concessions
+Bldg-Unit	Resident	Lease Status	Lease Term	Recurring	One-Time	Total	Remaining	Market Rent	Lease Rent	Effective Rent
+102	Fakename, Cy	Future	14 months	-3440	0		-3440	1720		1454.2857142857142
+105	Fakename, Di	Cancelled	12 months	0	-500		0	1313		1200
+Total/Average:		2	-3440	-500	-3940	-3440	1516		1327
+Concessions Burn-off
+Bldg-Unit	Resident	Lease Status	Sep 2025	Oct 2025	Total
+102	Fakename, Cy	Future	0	-3440	-3440
+
+=== Sheet: Work Order Details - Cityflats ===
+Work Order Details - Cityflats
+Test Lease-Up Building
+2026-01-01 - 2026-12-31
+Reference	BLDG-Unit	Created	Status	Priority	Work Order Type	Problem	Location	Description	Assigned Employee	Days Open	Due Date	Assigned Vendor	Internal Note		Response Time Avg
+ (Results: 1)
+17445368	-	2026-09-28 07:17:00 p.m. EDT	Suspended	Medium	Service Request	Other	Common Areas	Test building BID 1
+deferred task for December.	Test Employee	3	2026-12-07 11:59:00 p.m. EST					41:06:34
+Average:										3
+

@@ -1,0 +1,89 @@
+=== Sheet: Rent Roll - Cityflats ===
+Rent Roll - Cityflats
+Test Stabilised Building
+Sep 2026
+Unit Details
+Bldg-Unit	Unit Type	SQFT	Unit Status	Resident	Budgeted Rent	Scheduled Charges	Balance	Deposit Held	Move-In	Lease Start	Lease End	Expected Move-Out
+101	The Scholar	869	Occupied No Notice	Fakename, Ev	1165	3495	-2330	3495	46266	46266	46627
+102	The Arch	712	Occupied No Notice	Fakename, Fo	3000	3000	0	3000	46266	46266	46505
+202	The Limestone	1634	Vacant Rented Ready	-- Vacant --	1585	0
+301B	The Heritage	1329	Vacant Unrented Ready	-- Vacant --	1515	0		0
+	 Total:	3544			7265	6495	-2330	6495
+Status Summary			Charge Code Summary
+Description	Unit Count	Percent
+Occupied No Notice	2	0.5
+Total Occupied Units	2	0.5
+Vacant Rented Ready	1	0.25
+Vacant Unrented Ready	1	0.25
+Total Rentable Units	4	1
+Future Resident Details
+Bldg-Unit	Unit Type	SQFT	Unit Status	Resident	Market Rent	Scheduled Charges	Balance	Deposit Held	Move-In	Lease Start	Lease End
+202	The Limestone	1634	Vacant Rented Ready	Fakename, Gi	1585	1585	0	4755	46296	46296	46658
+	 Total:	1634			1585	1585	0	4755
+
+=== Sheet: Resident Aged Receivables - Cit ===
+Resident Aged Receivables - CityFlats
+Test Stabilised Building
+Sep 2026
+Bldg-Unit	Resident	Lease Status	Unallocated Charges / Credits	0-30 Days	31-60 Days	61-90 Days	90+ Days	Pre-Payments	Balance	Last Delinquency Note
+101	Fakename, Ev	Current	0	0	0	0	0	-2330	-2330
+102	Fakename, Fo	Current	100	0	100	0	0	0	100
+304	Fakename, Ha	Past - In Collections	6800	0	0	0	6800	0	6800	2026-03-03 02:27 p.m. Test note
+second line of the note
+	Fakename, Ip	Current	150	150	0	0	0	0	150
+		Test Stabilised Building Total:	7050	150	100	0	6800	-2330	4720
+
+=== Sheet: Work Order Details - Cityflats ===
+Work Order Details - Cityflats
+Test Stabilised Building
+2026-09-01 - 2026-09-30
+Reference	BLDG-Unit	Created	Status	Priority	Work Order Type	Problem	Location	Description	Assigned Employee	Days Open	Due Date	Assigned Vendor	Internal Note		Response Time Avg
+ (Results: 3)
+17444411	-	2026-09-02 03:40:00 p.m. EDT	Completed	Medium	Service Request	Other	Rooftop/Patio	ROOFTOP WORK
+Door and Pylons	Test Employee	1	2026-09-03 11:59:00 p.m. EDT					07:20:49
+17445203	303	2026-09-24 01:50:00 p.m. EDT	Scheduling Trade	Medium	Service Request	Dryer	Laundry Room	Dryer still wet	Test Employee	7	2026-09-30 11:59:00 p.m. EDT	Dependable Appliances (Kingston)	WO dispatched
+
+second paragraph			07:20:49
+17445467	-	2026-10-01 07:01:00 a.m. EDT	Open	Low	Recurring	Furnace	Unit Wide	Change filters	-	0					
+Average:										3
+
+=== Sheet: Concessions - CityFlats ===
+Concessions - CityFlats
+Test Stabilised Building
+Sep 2026
+Resident Concessions
+Bldg-Unit	Resident	Lease Status	Lease Term	Recurring	One-Time	Total	Remaining	Market Rent	Lease Rent	Effective Rent
+101	Fakename, Ev	Current	12 months	0	-3495		0	1165		3203.75
+103	Fakename, Old	Cancelled	12 months	0	-3750		0	3750		-312.5
+103	Fakename, Jo	Current	12 months	-1800	0		-1050	3750		3600
+Total/Average:		3	-1800	-7245	-9045	-1050	2888		2163
+Concessions Burn-off
+
+=== Sheet: Income Statement - Budget vs Ac ===
+Income Statement - Budget vs Actual Test
+Test Stabilised Building
+Sep 2026
+Accrual Basis
+Property	Account	Account Name
+Property	Account	Account Name	Actual	Budget	$ Variance	% Variance	Actual vs Prior Year	Actual	Budget	$ Variance	% Variance	YTD ( 2025 )	Annual Budget
+Potential Gross Income
+		Potential Gross Income	48530	76000	27470	0.36	48530	307965	670588.24	362623.24	0.54	0	670588.24
+		Net Rental Income	48530	76000	27470	0.36	48530	307965	670588.24	362623.24	0.54	0	670588.24
+Other Income
+Test Stabilised Building	740-100	Interest	1782	2492.67	-710.67	-0.28		11572.54	22434.03	10861.49	0.48	0	30000
+Test Stabilised Building	740-200	Parking	0	0	0	0		0	0	0	0	0	0
+		Other Income	1782	2492.67	-710.67	-0.28	1782	11572.54	22434.03	10861.49	0.48	0	30000
+		Effective Gross Income	50312	78492.67	-28180.67	-0.36	50312	319537.54	693022.27	373484.73	0.54	0	700588.24
+Administrative Expense
+		Administrative Expense	269.29	1130.23	860.94	0.76	269.29	11909.01	10172.07	-1736.94	-0.17	0	13000
+		Net Operating Income	33531.72	49104.38	-15572.66	-0.32	33531.72	67076.81	425727.66	-358650.85	-0.84	0	571640.8
+		Net Income	33531.72	49104.38	-15572.66	-0.32	33531.72	67076.81	425727.66	-358650.85	-0.84	0	571640.8
+
+=== Sheet: Income Statement - Trailing 12 ===
+Income Statement - Trailing 12 - CityFlats
+Test Stabilised Building
+Accrual Basis
+Oct 2025 - Oct 2026
+Account Name	Total	Oct 2026	Sep 2026	Aug 2026
+Net Operating Income	1000	0	700	300
+

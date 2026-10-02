@@ -1,4 +1,4 @@
-"""Run: python -m unittest discover -s tests -v
+"""Layout reference tests for the PDF readers in parsers/pdf (not used by the routine: it gets no PDF files).
 
 Needs the four fixture folders in fixtures/ (git-ignored: they hold resident names and
 balances). Tests are skipped when the PDFs are not there.
@@ -7,8 +7,9 @@ import glob
 import os
 import unittest
 
-from parsers import (activity_log, availability, concessions, derive, expiring_leases, income_budget, income_t12,
-                     lease_term_progress, receivables, registry, rent_roll, rentable_items, work_orders)
+from parsers import derive
+from parsers.pdf import (activity_log, availability, concessions, expiring_leases, income_budget, income_t12,
+                         lease_term_progress, receivables, registry, rent_roll, rentable_items, work_orders)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -226,20 +227,6 @@ class Derived(unittest.TestCase):
         f = registry.load(F1)
         c = derive.counts(f["Rent Roll"], f["Availability"])
         self.assertEqual((c["occupied"], c["leased"], c["inProgress"], c["available"]), (16, 1, 1, 1))
-
-
-@unittest.skipUnless(G1 and F1, "fixtures not present")
-class Figures(unittest.TestCase):
-    def test_figures_cover_every_property_and_flag_missing(self):
-        from parsers import figures
-        g = figures.build(G1, "grove", "2026-09-30")
-        self.assertEqual(g["counts"]["available"], 51)
-        self.assertEqual(len(g["stack"]), 82)
-        self.assertEqual(g["snapshot"]["date"], "2026-09-30")
-        f = figures.build(F1, "f47", "2026-09-30")
-        self.assertEqual(f["missing"], ["Concessions"])
-        self.assertNotIn("concessions", f)
-        self.assertEqual(len(f["workOrders"]), 13)
 
 
 if __name__ == "__main__":

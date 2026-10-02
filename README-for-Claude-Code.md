@@ -36,11 +36,11 @@ This folder holds live copies of `index.html`, `data.js` and `cityflats-logo.png
 
 `daily-job-rules.md` is the specification. In short:
 
-1. **Read today's Entrata emails** through the Microsoft 365 / Outlook connector.
+1. **Read today's Entrata emails** through the Microsoft 365 / Outlook connector. The figures come from the **Excel attachments**, not the PDFs: the connector returns an `.xlsx` as clean tab-separated text (empty cells kept, dates as Excel serial numbers) but flattens a PDF.
    - They arrive in Brandon.Ackerman@keilty.com at about 3:00 a.m. from system@entrata.com, with subjects starting "Entrata Reports - Command Center Reports - ...".
    - There are several packages, so read them all.
    - Keep only the rows for "The Cedar at the Grove" and "Faculty47".
-2. **Get the figures from the parsers** (section 4 and "How to run the parsers" below), not by reading the PDFs yourself. Every number comes from `python -m parsers.figures`. Your own judgement is for client wording only (notes, problem text, prospect note text, open-item sentences) and for the Command Center items.
+2. **Get the figures from the parsers** (section 4 and "How to run the parsers" below), not by reading the spreadsheets yourself. Every number comes from `python -m parsers.figures`. Your own judgement is for client wording only (notes, problem text, prospect note text, open-item sentences) and for the Command Center items.
 3. **Read the Command Center's open items and tours booked, read only.** These come from the page's built-in `"items":` array, then `board/newitems`, then `board/edits`, using the filters in STEP 3. **Never write to the Command Center.**
 4. **Add one history snapshot**, dated yesterday.
 5. **Run the checks in section 6.** If any check fails, don't save.
@@ -70,38 +70,47 @@ If no Entrata email arrived, still refresh the Command Center items, leave the E
 
 ## 4. The reading is fixed code (done, in `parsers/`)
 
-The same report is read the same way every morning. One parser per report, committed here, with tests against `fixtures/` (the 2026-09-30 and 2026-10-01 exports; git-ignored because they hold resident names and balances).
+The same report is read the same way every morning. One parser per report, committed here. **The full run steps are in `ROUTINE.md`.**
 
-- Numbers come from the scripts. Only wording is yours: short client sentences and the cleaning rules in section 5.
-- Work Order Details is read from text flow plus character positions for the vendor column. Receivables and the Activity Log are read by word position. The Activity Log's repeated entries are de-duplicated on name, date and time, and type.
-- `parsers/README.md` lists each module and how it reads its rows. `DIFFERENCES.md` records how the parsers compared with the 2026-10-02 feed, and the rulings made on each point.
-- **Setup script for the routine's cloud environment:** `pip install -r requirements.txt` (pdfplumber). Node is used only for `node --check` and the render test.
+- **Input:** the text the Outlook connector returns for each `.xlsx` attachment, saved exactly as returned, one `.txt` file per attachment. Cells are separated by tabs, empty cells are kept, a cell with a line break continues on the next line, dates are Excel serial numbers (46266 = 2026-09-01), and each sheet starts with `=== Sheet: <name> ===`. Sheets are found by the report title on the first line and the property on the second, so any package layout works. Columns are found by their heading, so an added column does not break a parser.
+- **Numbers come from the scripts.** Only wording is yours: short client sentences and the cleaning rules in section 5.
+- **Not used:** PDFs. The connector returns PDF text flattened, which is not reliable. `parsers/pdf/` keeps the old PDF readers as a layout reference (they need real PDF files, which the cloud run never has). If a report has no Excel at all, keep its last figures and flag it; reading the PDF text by hand is a last resort and must be flagged.
+- **Setup script for the routine's cloud environment:** `pip install -r requirements.txt`. The render check uses Playwright with the Chromium that is already installed.
+
+### What has been checked against real Excel text
+
+| Layout checked on real workbooks (Cityflats ownership package, Grove and Faculty47) | Written from the PDF headings only (no Excel export seen yet) |
+|---|---|
+| Rent Roll, Resident Aged Receivables, Concessions, Work Order Details, Income Statement Budget vs Actual, Income Statement Trailing 12 | Availability, Lease Term Progress Summary, Activity Log, Rentable Items Availability, Expiring Leases |
+
+The five on the right are read with the same header-driven approach, but until a real Command Center Excel export of each has been run through them, every run lists them under `warnings` so the figures get a look. Once a real export has been compared and tests added, set `LAYOUT_CHECKED = True` in that module.
 
 ### How to run the parsers
 
 ```
 pip install -r requirements.txt
-# one property, one folder of that day's PDFs (file names start with the report name):
-python -m parsers.figures <folder> grove --data-through YYYY-MM-DD > grove.json
-python -m parsers.figures <folder> f47   --data-through YYYY-MM-DD > f47.json
-# tests and checks
-python -m unittest discover -s tests -v          # needs fixtures/
-python -m parsers.compare <folder> grove --feed feeds/YYYY-MM-DD.json
-python -m parsers.diff_report > DIFFERENCES.md
+# one property, one folder of that day's saved attachment text:
+python -m parsers.figures work/YYYY-MM-DD grove --data-through YYYY-MM-DD > grove.json
+python -m parsers.figures work/YYYY-MM-DD f47   --data-through YYYY-MM-DD > f47.json
+# Command Center items and tours (read only):
+python tools/command_center.py <saved page> <newitems.json> <edits.json> --today YYYY-MM-DD
+# before every save:
+python tools/check_feed.py new.json previous.json
+python tools/render_check.py new.json
+# tests:
+python -m unittest discover -s tests -v
 ```
 
-- `figures` prints counts, stack, deals, rent, renewals, inventory units, arrears, funnel, concessions, parking items, budget, open work orders, the day's activity entries and the history snapshot (dated `--data-through`).
-- `missing` lists any report not in the folder. Keep that report's last figures, add a "missing" entry, and name it in the summary. Never present older figures as current.
-- `warnings` must be read and passed on in the summary. The first time Expiring Leases has rows, the routine says so, because its row layout has not been checked against a real report.
-- A parser raises an error on a row it cannot read. Treat that as a failed check: stop, change nothing, say why.
+- `figures` prints counts, stack, deals, rent, renewals, inventory units, arrears, funnel, concessions, parking items, budget (with `lines` labelled and any `unknownHeadings`), open work orders, the day's activity entries and the history snapshot (dated `--data-through`).
+- `missing` lists reports with no sheet for the property: keep the last figures and raise a `missing` flag. `unreadable` lists sheets a parser could not read: keep the last figures, raise a `fix` flag, **carry on with the other reports**. `warnings` are passed on in the summary.
+- Only a failed whole-feed check (section 6) stops the run.
 
-### Not covered by the parsers yet
+### Fixed rules for the fields the parsers build
 
-These still need the run's own judgement or a rule from Brandon: `inventory.plans` (the per-plan table and its bedroom labels), `rent.avgSqft`, `rent.signedBudget` and `lossToLease`, the labels on `budget.lines`, `weeklyChecklist`, and all client wording.
-
-### Open problem: getting the PDFs into the parsers
-
-The parsers read PDF files. On 2026-10-02 the Outlook connector's `read_resource` returned each attachment as extracted text, not as a file, and the "Download PDF" links in the emails need an Entrata login. Until the routine can save the attachments as PDFs (for example a OneDrive or SharePoint folder, or a file drop the routine can read), it cannot run `parsers.figures` on live data. Do not work around this by hand-reading the text; tell Brandon.
+- **Grove `rent`:** `signed` = rent on the leased suites; `signedCount` = how many; `signedBudget` = Availability's budgeted rent for the same suites; `lossToLease` = `signedBudget` minus `signed` (0 shows as "On budget"); `avgSuite` = `signed` / `signedCount`; `avgSqft` = `signed` / those suites' square feet; `committed` = `signed` plus the rent on leases in progress; `fullBudget` = budgeted rent for all 81 rentable suites.
+- **Faculty47 `rent`:** `inPlace` = current rent on occupied suites; `avgSuite` = `inPlace` / `occupiedCount`; `avgSqft` = `inPlace` / those suites' square feet; `futureRent` = rent of the "leased, moving in" future residents.
+- **`budget.lines`:** the Budget vs Actual sections in plain wording through a fixed table (`BUDGET_LABELS` in `parsers/derive.py`). A heading not in the table is listed in the summary, not guessed.
+- **Carried forward unchanged:** `inventory.plans`, `inventory.askingAvg` (the page doesn't use them) and `weeklyChecklist` (team view only).
 
 ## 5. Feed structure and rules
 

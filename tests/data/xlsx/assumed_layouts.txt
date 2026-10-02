@@ -1,0 +1,53 @@
+=== Sheet: Availability (CC) ===
+Availability (CC)
+Test Lease-Up Building
+As of 2026-10-01
+Property	Look-Up Code	Bldg-Unit	FloorUnit Type	Unit Type	Unit Type Lookup Code	Budgeted / SQFT	Floor Plan	SQFT	Budgeted Rent	Prior Lease Rent	Current Lease Rent	Future Lease Rent	Move-Out	Days Until Move-Out	Vacant Days	Est. Vacancy Cost	Lead	Scheduled Move-In	Available On	Resident
+Test Lease-Up Building
+Non-Excluded Units
+Vacant Unrented Ready (Available) (Results: 1)
+		104		Brook			Brook	479	1313	0					0	0			46388
+Vacant Rented Ready (Unavailable) (Results: 1)
+		101		View			View	551	1700	0		1700			0	0		46388	46388	Fakename, Ada
+Non-Excluded Units Totals:								1030	3013
+
+=== Sheet: Lease Term Progress Summary (CC ===
+Lease Term Progress Summary (CC)
+Test Lease-Up Building
+As of 2026-10-01
+Leads In Status
+Property	Guest Card Completed	Application Started	Application Partially Completed	Application Completed	Application Approved	Lease Started	Lease Partially Completed	Lease Completed	Lease Approved	Total
+Test Lease-Up Building	19	5	2	3	1	2	0	0	4	36
+Avg Time In Status (dd:hh:mm)
+Property	Guest Card Completed	Application Started	Application Partially Completed	Application Completed	Application Approved	Lease Started	Lease Partially Completed	Lease Completed	Total
+Test Lease-Up Building	02:23:08	00:20:46	01:18:51	03:17:12	00:05:08	00:07:25	00:00:00	01:11:36	11:08:06
+
+=== Sheet: Activity Log - Leasing (CC) ===
+Activity Log - Leasing (CC)
+Test Lease-Up Building
+2026-09-30
+Name	Bldg-Unit	Status	Date	Activity	Description	Leasing Agent (Activity)	Tag
+Property : Test Lease-Up Building
+Fakename, Ada	211	Application : Started	46295.5020833	Tour	Wants a one bedroom.
+Second line.	Test Agent
+Fakename, Bo	Unknown	Guest Card : Completed	46295.6159722	Tour	Looked at a unit	Test Agent
+Fakename, Bo	Unknown	Guest Card : Completed	46295.6159722	Tour	Looked at a unit	Test Agent
+
+=== Sheet: Rentable Items Availability (CC ===
+Rentable Items Availability (CC)
+Test Lease-Up Building
+As of 2026-10-01
+Inventory Name	Status	Hold Until	Charge Type	Charge Timing	Charge Code	Amount	Reserved By	Reservation Dates	Available On	Rate
+Parking - Parking (Results: 3)
+P54	Vacant Rented Ready		Other Income	Monthly	Parking, Residents	80	Fakename, Cy (205)	03/01/2027 - 02/28/2028		80
+P59	Vacant Unrented Ready		Other Income	Monthly	Parking, Residents	80
+P67 - Accessible	Vacant Unrented Ready		Other Income	Monthly	Parking, Residents	80
+
+=== Sheet: Expiring Leases - Cityflats (CC ===
+Expiring Leases - Cityflats (CC)
+Test Lease-Up Building
+2026-10-01 - 2026-10-31
+Detail
+Bldg-Unit	Unit Type	Resident	Lease Interval Status	Email	Lease Status	Primary Phone	Lease Start	Lease End	Move-Out	Deposit Held	Scheduled Charges
+Selected report filters returned no data
+

@@ -1,124 +1,60 @@
-"""Work Order Details.
+"""Work Order Details, from the Excel text. LAYOUT_CHECKED: yes (Grove and Faculty47 workbooks).
 
-Cells wrap and overlap, so fields are read from the text flow with fixed patterns, and
-the vendor is split from the internal note using the vendor column's x position.
-Parse the current-year and prior-year reports separately and combine with combine().
-"""
+Cells with line breaks (descriptions, notes) are joined back into one row before splitting on tabs.
+Parse the current-year and prior-year sheets separately and join them with combine()."""
 import re
 
-import pdfplumber
+from . import xlsxtext as x
 
-from .common import header_info
-
-START = re.compile(r"^(?P<ref>\d{7,9}) (?P<unit>\S+) (?P<created>\d{4}-\d\d-\d\d) (?P<ctime>\d\d:\d\d:\d\d) [ap]\.m\. E[SD]T (?P<rest>.*)$")
-DUE = re.compile(r"(?:^| )(?P<days>\d+|-) (?P<due>\d{4}-\d\d-\d\d) \d\d:\d\d:\d\d [ap]\.m\. E[SD]T(?: |$)")
-STATUSES = ["Awaiting Parts", "Scheduling Trade", "In Progress", "Suspended", "Open", "Completed", "Scheduled", "On Hold", "Dispatched", "Waiting"]
-PRIORITIES = ["Low", "Medium", "High", "Emergency", "Urgent"]
-TYPES = ["Service Request", "Recurring", "Preventive", "Make Ready", "Inspection"]
-LOCATIONS = ["Unit Wide", "Common Areas", "Bathroom", "Laundry Room", "Exterior", "Kitchen", "Bedroom", "Living Room", "Hallway", "Parking Lot", "Roof", "Lobby", "Basement", "Mechanical Room"]
-EMPLOYEE = re.compile(r"(?:^|(?<=\s))(?P<emp>- |[A-Z][a-z]+ [A-Z][a-z]+ )$")
+LAYOUT_CHECKED = True
+KEY = "work order details"
+START = re.compile(r"^\d{7,9}\t")
 
 
-def _vendor_fragments(path):
-    """Text in the Assigned Vendor column, line by line, in page order. Read from
-    characters because the words are split letter by letter in this report."""
-    frags = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            words = page.extract_words()
-            hv = [w for w in words if w["text"] == "Assigned" and w["x0"] > 400]
-            hn = [w for w in words if w["text"] == "Internal"]
-            if not hv or not hn:
-                continue
-            x_lo, x_hi, top0 = hv[0]["x0"] - 2, hn[0]["x0"] - 1, hv[0]["top"]
-            lines = {}
-            for c in page.chars:
-                if c["top"] > top0 + 8 and x_lo <= c["x0"] < x_hi and c["top"] < 755:
-                    lines.setdefault(round(c["top"] / 3), []).append(c)
-            for k in sorted(lines):
-                cs = sorted(lines[k], key=lambda c: c["x0"])
-                text = ""
-                for i, c in enumerate(cs):
-                    if i and c["x0"] - cs[i - 1]["x1"] > 0.3 * c["size"]:
-                        text += " "
-                    text += c["text"]
-                frags.append(text.strip())
-    return frags
+def _dt(s):
+    m = re.match(r"(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)", s or "")
+    return (m.group(1), m.group(2)) if m else (x.date(s), None)
 
 
-def parse(path):
-    with pdfplumber.open(path) as pdf:
-        text = []
-        for page in pdf.pages:
-            text.extend((page.extract_text(use_text_flow=True) or "").split("\n"))
-    info = header_info(text)
-    for ln in text:
-        m = re.match(r"^(\d{4}-\d\d-\d\d) - (\d{4}-\d\d-\d\d)$", ln.strip())
-        if m:
-            info["range"] = [m.group(1), m.group(2)]
+def parse(lines):
+    info = x.title_info(lines)
     declared = None
-    recs, cur = [], None
-    for ln in text:
-        s = ln.strip()
-        m = re.match(r"^\(Results: (\d+)\)", s)
+    for ln in lines:
+        m = re.search(r"\(Results: (\d+)\)", ln)
         if m:
             declared = int(m.group(1))
-            continue
-        if s.startswith("Average:") or s.startswith("Report Average:"):
-            cur = None
-            continue
-        if s.startswith("Reference BLDG-Unit") or s.startswith("Work Order Details") or s.startswith("Property:") or s.startswith("'") and info.get("range") is None:
-            continue
-        m = START.match(s)
-        if m:
-            cur = {"head": m.groupdict(), "body": [m["rest"]]}
-            recs.append(cur)
-        elif cur is not None and s:
-            cur["body"].append(s)
-    frags = _vendor_fragments(path)
-    ptr = 0
+    m = re.match(r"^(\d{4}-\d\d-\d\d) - (\d{4}-\d\d-\d\d)$", info["period"])
+    if m:
+        info["range"] = [m.group(1), m.group(2)]
+    rows = [x.cells(l) for l in lines]
+    h = x.header_index(rows, "Reference", "Status", "Assigned Vendor", "Internal Note")
+    cols = x.columns(rows[h])
     out = []
-    for r in recs:
-        h = r["head"]
-        body = " ".join(r["body"])
-        rest = body
-        status = next((x for x in STATUSES if rest.startswith(x + " ")), None)
-        rest = rest[len(status) + 1:] if status else rest
-        prio = next((x for x in PRIORITIES if rest.startswith(x + " ")), None)
-        rest = rest[len(prio) + 1:] if prio else rest
-        wtype = next((x for x in TYPES if rest.startswith(x + " ")), None)
-        rest = rest[len(wtype) + 1:] if wtype else rest
-        dm = DUE.search(rest)
-        before, tail = (rest[: dm.start()], rest[dm.end():].strip()) if dm else (rest, "")
-        emp = EMPLOYEE.search(before + " ")
-        employee = emp["emp"].strip() if emp else None
-        before = before[: emp.start()].strip() if emp else before.strip()
-        loc = next((l for l in LOCATIONS if f" {l} " in f" {before} " or before.endswith(" " + l)), None)
-        if loc:
-            i = before.index(loc)
-            problem, description = before[:i].strip(), before[i + len(loc):].strip()
-        else:
-            problem, description = None, before
-        vendor = ""
-        while ptr < len(frags):
-            cand = (vendor + " " + frags[ptr]).strip()
-            if tail.startswith(cand):
-                vendor, ptr = cand, ptr + 1
-            else:
-                break
-        note = tail[len(vendor):].strip() if vendor else tail
+    for ln in x.merge_by_start([l for l in lines[h + 1:] if START.match(l) or not out_is_summary(l)], lambda l: bool(START.match(l))):
+        if not START.match(ln):
+            continue
+        r = ln.split("\t")
+        created, ctime = _dt(x.get(r, x.col(cols, "created")))
+        due, _ = _dt(x.get(r, x.col(cols, "due date")))
+        unit = x.get(r, x.col(cols, "bldg-unit"))
+        emp = x.get(r, x.col(cols, "assigned employee"))
         out.append({
-            "ref": h["ref"], "unit": "" if h["unit"] == "-" else h["unit"], "created": h["created"], "created_time": h["ctime"],
-            "status": status, "priority": prio, "type": wtype, "problem": problem, "location": loc, "description": description,
-            "employee": None if employee in (None, "-") else employee, "days_open": None if not dm or dm["days"] == "-" else int(dm["days"]),
-            "due": dm["due"] if dm else None, "vendor": vendor, "note": note,
-            "needs_review": [k for k, v in (("status", status), ("priority", prio), ("type", wtype), ("location", loc), ("due", dm)) if not v],
-        })
+            "ref": x.get(r, x.col(cols, "reference")), "unit": "" if unit in ("-", "") else unit, "created": created, "created_time": ctime,
+            "status": x.get(r, x.col(cols, "status")), "priority": x.get(r, x.col(cols, "priority")),
+            "type": x.get(r, x.col(cols, "work order type")), "problem": x.get(r, x.col(cols, "problem")),
+            "location": x.get(r, x.col(cols, "location")), "description": x.one_line(x.get(r, x.col(cols, "description"))),
+            "employee": None if emp in ("", "-") else emp, "days_open": x.to_number(x.get(r, x.col(cols, "days open"))),
+            "due": due, "vendor": x.get(r, x.col(cols, "assigned vendor")), "note": x.one_line(x.get(r, x.col(cols, "internal note"))),
+            "needs_review": [k for k, v in (("status", x.get(r, x.col(cols, "status"))), ("created", created)) if not v]})
     return {"report": "Work Order Details", **info, "declared": declared, "orders": out}
 
 
+def out_is_summary(line):
+    """The trailing 'Average:' rows are not work orders."""
+    return line.startswith("Average:") or line.startswith("Report Average:")
+
+
 def combine(*parsed):
-    """Combine current and prior-year parses, dropping duplicates by reference."""
     seen, orders = set(), []
     for p in parsed:
         for o in p["orders"]:
