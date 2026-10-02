@@ -167,6 +167,20 @@ def renewed_units(rr, ar=None):
     return sorted(out)
 
 
+def mtm_count(rr, today):
+    """Month-to-month leases: current residents whose lease has no end date or whose end date has passed, so they
+    roll over on their own. One per suite on the Rent Roll. today is the run date."""
+    return sum(1 for s in rr["suites"] if s["status"].startswith("Occupied") and s.get("resident")
+               and (not s.get("lease_end") or s["lease_end"] < today))
+
+
+def parking_income(rr):
+    """Parking rent in place per month, only if the Rent Roll carries parking charges (its Charge Code Summary lists
+    a parking charge code with an amount). None when it does not: never estimated, never worked out from stall rates."""
+    codes = [c for c in rr.get("charge_codes", []) if "parking" in (c["name"] or "").lower() and c.get("scheduled") is not None]
+    return round(sum(c["scheduled"] for c in codes), 2) if codes else None
+
+
 def increases(rr, today, renewed=(), window_months=6):
     """Rent increases due, one row per lease: {num, rent, earliest, noticeBy}. The dashboard shows when an increase is
     due, not the amount, so there is no new rent.

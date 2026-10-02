@@ -159,6 +159,21 @@ def check(new, old, names=None, renewed=None):
                     fails.append(f"10. {pid}: renewals.byEnd entry {pair!r} is not [date, count]")
                 elif not lo <= pair[0] <= hi:
                     fails.append(f"10. {pid}: renewals.byEnd has {pair[0]}, outside {lo} to {hi}")
+        # the four fields added with template 2026-10-02.12. renewals.mtm is always written; the other three are written
+        # only when a report carries them (never estimated), so they are checked when present and noted when not.
+        mtm = (p.get("renewals") or {}).get("mtm")
+        if not (isinstance(mtm, int) and not isinstance(mtm, bool) and mtm >= 0):
+            fails.append(f"14. {pid}: renewals.mtm must be a count of month-to-month leases, 0 if none (got {mtm!r})")
+        if "leadsWeek" in p:
+            lw = p["leadsWeek"]
+            if not (isinstance(lw, int) and not isinstance(lw, bool) and lw >= 0):
+                fails.append(f"15. {pid}: leadsWeek must be a whole number of guest cards, 0 or more (got {lw!r})")
+        since = (p.get("funnel") or {}).get("since")
+        if since is not None and not (ISO.match(str(since)) and str(since) <= new["dataThrough"]):
+            fails.append(f"16. {pid}: funnel.since must be a YYYY-MM-DD date on or before dataThrough (got {since!r})")
+        income = (p.get("items") or {}).get("income")
+        if "income" in (p.get("items") or {}) and not (isinstance(income, (int, float)) and not isinstance(income, bool) and income >= 0):
+            fails.append(f"17. {pid}: items.income must be a number of dollars a month, 0 or more (got {income!r})")
         # arrears wording: never write legal steps or file numbers in a status, comment or note
         for path, v in walk(p.get("arrears")):
             if isinstance(v, str) and LEGAL.search(v):
@@ -182,6 +197,19 @@ def check(new, old, names=None, renewed=None):
     return fails
 
 
+def gaps(new):
+    """Optional fields the feed does not carry. Not failures: the page shows a dash or leaves the line out."""
+    out = []
+    for p in new["properties"]:
+        if "leadsWeek" not in p:
+            out.append(f"{p['id']}: leadsWeek not in the feed (the page shows a dash for New leads)")
+        if (p.get("funnel") or {}).get("since") is None:
+            out.append(f"{p['id']}: funnel.since not in the feed")
+        if "income" not in (p.get("items") or {}):
+            out.append(f"{p['id']}: items.income not in the feed")
+    return out
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("new")
@@ -196,6 +224,8 @@ if __name__ == "__main__":
     if not names:
         print("note: no --figures given, so only names already in the arrears table and prospects are checked, not the Rent Roll")
     f = check(json.load(open(a.new)), json.load(open(a.old)), names, renewed)
+    for g in gaps(json.load(open(a.new))):
+        print("note:", g)
     for x in f:
         print("FAIL", x)
     print("feed checks:", "FAILED" if f else "passed")

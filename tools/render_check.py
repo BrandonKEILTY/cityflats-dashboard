@@ -4,10 +4,12 @@
 
 index.html is the live page, synced from the artifact (never published from the routine). The page keeps a
 built-in copy of the feed and, when it runs inside Claude, replaces it with the database document dash/feed.
+index.html here has the built-in copy of the figures removed (tools/sync_page.py), because it held resident names.
 Two passes:
   1. the feed is swapped in for the built-in copy (what the page draws first);
-  2. the built-in copy is left alone and a stub of the database hands the page the feed as JSON text in field
-     "json" (the real live path: the page parses it and redraws).
+  2. a copy of the feed marked "fallback" is put in as the built-in copy, and a stub of the database hands the page
+     the real feed as JSON text in field "json" (the live path: the page parses it and redraws). The check fails
+     if the page still shows the fallback (its property names carry a marker).
 Each pass opens the portfolio overview and every property. This is a safety check before saving; Brandon still
 render-checks the published page. Needs: pip install playwright (the browser is already installed).
 """
@@ -31,8 +33,14 @@ def swap_builtin_feed(html, feed):
     """Replace the page's built-in `window.CLIENT_FEED = {...};` with the given feed."""
     key = "window.CLIENT_FEED = "
     i = html.index(key)
-    _, end = json.JSONDecoder().raw_decode(html[i + len(key):])
-    return html[:i + len(key)] + json.dumps(feed) + html[i + len(key) + end:]
+    _, end = json.JSONDecoder().raw_decode(html[i + len(key):])  # an object, or null in this repository's copy
+    rest = html[i + len(key) + end:]
+    if rest.startswith(";"):
+        rest = rest[1:]
+    else:  # null followed by a placeholder comment up to the semicolon
+        j = rest.find(";")
+        rest = rest[j + 1:] if j != -1 and "\n" not in rest[:j] else rest
+    return html[:i + len(key)] + json.dumps(feed) + ";" + rest
 
 
 def db_stub(feed):
@@ -60,6 +68,8 @@ def run_pass(browser, label, html, feed, stub, tmp):
             name = next(p["name"] for p in feed["properties"] if p["id"] == v)
             if name not in text:
                 problems.append(f"{label}/{v}: property name {name!r} not on the page")
+        if stub and "FALLBACKCOPY" in text:
+            problems.append(f"{label}/{v}: the page still shows the fallback copy, so the database path did not redraw it")
         for bad in BAD:
             if bad in text:
                 i = text.index(bad)
@@ -78,7 +88,8 @@ def check(feed_path, page="index.html"):
         with sync_playwright() as pw:
             b = pw.chromium.launch(executable_path=chrome(), args=["--no-sandbox"])
             problems = run_pass(b, "builtin", swap_builtin_feed(html, feed), feed, False, tmp)
-            problems += run_pass(b, "database", html, feed, True, tmp)
+            fallback = dict(feed, generated="FALLBACK-COPY", properties=[dict(p, name=p["name"] + " FALLBACKCOPY") for p in feed["properties"]])
+            problems += run_pass(b, "database", swap_builtin_feed(html, fallback), feed, True, tmp)
             b.close()
     finally:
         shutil.rmtree(tmp)

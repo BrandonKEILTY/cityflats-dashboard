@@ -12,8 +12,8 @@ def _status(s):
 def parse(lines):
     info = x.title_info(lines)
     rows = [x.cells(l) for l in lines]
-    out = {"report": "Rent Roll", **info, "suites": [], "future": [], "status_summary": {}, "totals": {}}
-    section, cols = None, None
+    out = {"report": "Rent Roll", **info, "suites": [], "future": [], "status_summary": {}, "totals": {}, "charge_codes": []}
+    section, cols, cc_cols = None, None, None
     last_future = None
     for r in rows:
         first = r[0].strip() if r else ""
@@ -22,6 +22,9 @@ def parse(lines):
             continue
         if first == "Status Summary":
             section = "summary"
+            continue
+        if section == "summary" and first == "Description":
+            cc_cols = x.columns(r)  # the Charge Code Summary sits to the right of the status counts
             continue
         if first.startswith("Average Charges by Unit Type"):
             section = "avg"
@@ -49,6 +52,11 @@ def parse(lines):
                             "lease_start": x.date(x.get(r, x.col(cols, "lease start"))), "lease_end": x.date(x.get(r, x.col(cols, "lease end")))})
             out["suites"].append(row)
         elif section == "summary":
+            if cc_cols and "charge code" in cc_cols and "scheduled" in cc_cols:
+                name = x.get(r, cc_cols["charge code"])
+                if name and "returned no data" not in name:
+                    out["charge_codes"].append({"name": name, "scheduled": x.num(x.get(r, cc_cols["scheduled"])),
+                                                "type": x.get(r, cc_cols.get("charge code type"))})
             if first and first != "Description" and len(r) > 1 and r[1].strip():
                 try:
                     out["status_summary"][first] = int(float(r[1]))
