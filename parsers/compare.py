@@ -65,7 +65,7 @@ def run(folder, prop_id, feed_path, snapshot=None):
         if "byEnd" in p["renewals"]:
             d("renewals", "byEnd", rn["byEnd"], p["renewals"]["byEnd"])
         if "increases" in p:
-            mine = derive.increases(rr, feed["dataThrough"])
+            mine = derive.increases(rr, feed["asAt"])
             d("increases", "rows", [(x["num"], x["rent"], x["earliest"], x["noticeBy"]) for x in mine],
               [(x["num"], x["rent"], x["earliest"], x["noticeBy"]) for x in p["increases"]])
         inv = {x[0]: x for x in p["inventory"]["units"]}

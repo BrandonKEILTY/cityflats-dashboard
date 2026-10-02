@@ -141,7 +141,7 @@ python -m unittest discover -s tests -v
 | `prospects` | `{name, unit, status, agent, entries}`; entries newest first and never removed | Activity Log, Leasing |
 | `items` | Parking `{source, list, occupied, total, note}` | Rentable Items Availability |
 | `renewals` | `{source, expiring120, firstEnd, byEnd, rows, note}`. `byEnd` is `[date, count]` pairs from the Rent Roll lease ends (current and future residents), inside 12 months of `dataThrough` only. `firstEnd` is the earliest lease end overall. `expiring120` is the Expiring Leases count. | Expiring Leases + Rent Roll |
-| `increases` | List of `{num, rent, newRent, earliest, noticeBy}`, one row per lease. `earliest` = 12 months after the rent last changed (the Rent Roll lease start); `noticeBy` = `earliest` minus 90 days. Only rows whose `noticeBy` falls by `dataThrough` plus 6 months (notices already due included); `[]` if none. `newRent` stays `null` until Brandon confirms the rule. | Rent Roll |
+| `increases` | List of `{num, rent, earliest, noticeBy}`, one row per lease. There is no new rent: the dashboard shows when an increase is due, not the amount. `earliest` = 12 months after the rent last changed (the Rent Roll lease start); `noticeBy` = `earliest` minus 90 days. Only rows whose `noticeBy` falls by the run date (`asAt`) plus 6 months (notices already due included); `[]` if none. | Rent Roll |
 | `arrears` | `{source, owing, due, dueLabel, former, formerCount, detail, note}`. The page finds former residents in collections by the word "collections" in the status, so write "Former resident, with collections". Never write legal steps in any status, comment or note: no "eviction", "LTB", "N4", hearings or file numbers, and do not copy Entrata's status text (for example "Past - Eviction"). | Resident Aged Receivables |
 | `rent` | Rent in place, averages, loss to lease, committed, full budget | Rent Roll + Availability |
 | `concessions` | `{source, units: [{unit, plan, term, total}], total, note}` | Concessions |
@@ -173,6 +173,7 @@ The full wording is in `daily-job-rules.md`.
   - Drop prospects, tours, work orders and Leasing fyi items.
   - Respect `clientView` and `clientNote` if present.
 - **Writing for the owner:**
+  - No resident names in any note. Names appear only in the arrears table and the prospects list (write "Suite 302 has already renewed", not the resident's name). `check_feed.py` fails if a Rent Roll name appears in a note.
   - No report or system names, run times, data problems or prepayments.
   - No credit scores, incomes, personal circumstances, legal file numbers, codes, phone numbers or emails.
   - Anything worth checking goes in my summary.

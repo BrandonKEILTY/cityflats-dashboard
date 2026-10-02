@@ -1,6 +1,6 @@
 {
  "asAt": "2026-10-02",
- "generated": "2026-10-02 17:45",
+ "generated": "2026-10-02 18:30",
  "client": "Centennial Land Development LP and Faculty 47 Development LP",
  "short": "Cityflats portfolio",
  "properties": [
@@ -3023,7 +3023,7 @@
       2
      ]
     ],
-    "note": "No leases expire in the next four months. [name removed] (302) has already renewed. Eight leases end 2027-04-28, one 2027-06-28, seven 2027-08-28 and two 2027-09-28."
+    "note": "No leases expire in the next four months. Suite 302 has already renewed. Eight leases end 2027-04-28, one 2027-06-28, seven 2027-08-28 and two 2027-09-28."
    },
    "arrears": {
     "source": "Resident Aged Receivables, Oct 2026",
@@ -4094,72 +4094,68 @@
     {
      "num": "103",
      "rent": 3750.0,
-     "newRent": null,
      "earliest": "2027-04-20",
      "noticeBy": "2027-01-20"
     },
     {
      "num": "204",
      "rent": 3005.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "205",
      "rent": 3655.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "302",
      "rent": 4295.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "303",
      "rent": 4110.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "304",
      "rent": 3010.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "305",
      "rent": 3660.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "401",
      "rent": 3675.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "403",
      "rent": 7700.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
     },
     {
      "num": "404",
      "rent": 2515.0,
-     "newRent": null,
      "earliest": "2027-05-01",
      "noticeBy": "2027-01-31"
+    },
+    {
+     "num": "201",
+     "rent": 4755.0,
+     "earliest": "2027-07-01",
+     "noticeBy": "2027-04-02"
     }
    ]
   }

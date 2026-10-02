@@ -58,7 +58,7 @@ For each property, replace these from its parser file, keeping the structure and
 |---|---|
 | `counts`, `stack`, `deals`, `rent` | `counts`, `stack`, `deals`, `rent`. Grove (lease-up) and Faculty47 (stabilised) get different rent keys; use what the parser gives. `counts.toursToday` is yesterday's tour count. |
 | `inventory.units`, `inventory.unleasedMonthly` | `inventory` |
-| `renewals`, `increases` | `renewals`: `expiring120` (the Expiring Leases count), `firstEnd`, and `byEnd` as `[date, count]` pairs for the next 12 months only. Rows from Expiring Leases when it has any. Write `note` under the writing rules. `increases`: the list from the parser, one row per lease, `newRent` left `null`; `[]` when none. |
+| `renewals`, `increases` | `renewals`: `expiring120` (the Expiring Leases count), `firstEnd`, and `byEnd` as `[date, count]` pairs for the next 12 months only. Rows from Expiring Leases when it has any. Write `note` under the writing rules. `increases`: the list from the parser, one row per lease as `{num, rent, earliest, noticeBy}` (there is no new rent); `[]` when none. |
 | `arrears` | `arrears`: `owing`, `due`, `former`, `formerCount`, and `detail` rows (only rows with a balance owing). Never show credits or prepayments. Write each status and comment yourself: "Current resident, October rent", "Current resident (renewed), October rent", "Former resident, with collections" (or "Former resident" when not in collections). The page finds collections by that word. Never write legal steps or file numbers (no "eviction", "LTB", "N4", hearings) and do not copy Entrata's status text. Write `note`. |
 | `funnel` | `funnel`: `stages`, `total`, `avgTotal` |
 | `concessions` | `concessions`: `units`, `total`. Write `note`. |
@@ -75,14 +75,14 @@ Carry forward unchanged: `weeks`, `missedWeeks`, `planBeds`, `inventory.plans`, 
 
 A report that is missing or unreadable keeps the last values for its keys. Never leave a key empty or invent a figure.
 
-Client wording follows the writing rules in `daily-job-rules.md`: short, plain, factual; no report or system names, run times, data problems, prepayments or credits; leave a note `""` when the owner needs nothing.
+Client wording follows the writing rules in `daily-job-rules.md`: short, plain, factual; no resident names in any note (refer to the suite: "Suite 302 has already renewed"), because names belong only in the arrears table and the prospects list; no report or system names, run times, data problems, prepayments or credits; leave a note `""` when the owner needs nothing.
 
 Write the finished feed to `work/YYYY-MM-DD/feed.json`.
 
 ## 5. Checks
 
 ```
-python tools/check_feed.py work/YYYY-MM-DD/feed.json work/YYYY-MM-DD/previous.json
+python tools/check_feed.py work/YYYY-MM-DD/feed.json work/YYYY-MM-DD/previous.json --figures work/YYYY-MM-DD/grove.json --figures work/YYYY-MM-DD/f47.json
 python tools/render_check.py work/YYYY-MM-DD/feed.json
 ```
 
