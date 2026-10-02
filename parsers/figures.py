@@ -19,14 +19,20 @@ def build(folder, prop_id, data_through, property_name=None, previous_feed=None,
     out = {"id": prop_id, "dataThrough": data_through, "missing": r["missing"], "unreadable": r["unreadable"], "warnings": r["warnings"]}
     rr, av = r["Rent Roll"], r["Availability"]
     al = activity_log.dedupe(r["Activity Log"]["entries"]) if r["Activity Log"] else None
-    if rr and av:
+    if rr:  # these need the Rent Roll only
         out["residents"] = derive.resident_names(rr)  # for the "no resident names in notes" check
+        out["renewals"] = derive.renewals(rr, r["Expiring Leases"], data_through)
+        renewed = derive.renewed_units(rr, r["Resident Aged Receivables"])
+        out["renewedSuites"] = renewed
+        out["increases"] = derive.increases(rr, as_at or derive.add_days(data_through, 1), renewed)
+        out["increasesBasis"] = ("Rent increases use the lease start on the Rent Roll for every lease; a rent change during a lease "
+                                 "cannot be read from the Rent Roll columns, so it is not used. Renewed suites are left off.")
+        out["leaseStartToConfirm"] = [u for u in derive.LEASE_START_TO_CONFIRM.get(prop_id, []) if any(i["num"] == u for i in out["increases"])]
+    if rr and av:
         out["counts"] = derive.counts(rr, av, al)
         out["stack"] = derive.stack(rr, av)
         out["deals"] = derive.deals(rr, mode)
         out["rent"] = derive.rent(rr, av, mode)
-        out["renewals"] = derive.renewals(rr, r["Expiring Leases"], data_through)
-        out["increases"] = derive.increases(rr, as_at or derive.add_days(data_through, 1))
         out["inventory"] = {"units": [[u["unit"], u["plan"], u["sqft"], u["budget_rent"], u["available_on"] or "", u["status"]] for u in av["units"]],
                             "unleasedMonthly": sum(u["budget_rent"] for u in av["units"] if u["status"] == "Vacant Unrented Ready")}
     if r["Resident Aged Receivables"]:

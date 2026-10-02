@@ -148,15 +148,38 @@ def renewals(rr, ex, today):
             "byEnd": [[d, c] for d, c in sorted(by.items())]}
 
 
-def increases(rr, today, window_months=6):
+# Suites whose lease start is still being confirmed in Entrata: they stay on the list, flagged in the summary.
+# Remove a suite from here once its start date is confirmed.
+LEASE_START_TO_CONFIRM = {"f47": ["305"]}
+
+
+def renewed_units(rr, ar=None):
+    """Suites that already have a renewal. 'Current - Renewed' on the receivables report means a renewal lease has
+    been signed for the next term, which sets the new rent; so does a future lease on a suite that has a current
+    resident. Those suites are left off the rent increases list."""
+    out = set()
+    for r in (ar or {"rows": []})["rows"]:
+        if "renewed" in (r.get("status") or "").lower() and r.get("unit"):
+            out.add(r["unit"])
+    occupied = {s["unit"] for s in rr["suites"] if s["status"].startswith("Occupied") and s.get("resident")}
+    out |= {f["unit"] for f in rr["future"] if f["unit"] in occupied}
+    return sorted(out)
+
+
+def increases(rr, today, renewed=(), window_months=6):
     """Rent increases due, one row per lease: {num, rent, earliest, noticeBy}. The dashboard shows when an increase is
-    due, not the amount, so there is no new rent. The earliest date a new rent can take effect is 12 months after the
-    rent last changed (the lease start on the Rent Roll), and notice is due 90 days before that. Only leases whose
-    notice date falls by today + 6 months are listed (notices already due included). today is the run date."""
+    due, not the amount, so there is no new rent.
+    The rent last changed on the lease start on the Rent Roll (Availability notes and dates are never a source for lease
+    dates). The earliest a new rent can take effect is 12 months after that; notice is due 90 days before. Only leases
+    whose notice date falls by today + 6 months are listed (notices already due included); today is the run date.
+    Suites in `renewed` are left off: their renewal sets the new rent.
+    Not read: a rent change during a lease (the Rent Roll columns we receive show one scheduled total), so the lease
+    start is used for every lease and the summary says so."""
     horizon = add_months(today, window_months)
+    skip = set(renewed)
     rows = []
     for l in leases(rr):
-        if not l["start"] or not l["rent"]:
+        if not l["start"] or not l["rent"] or l["num"] in skip:
             continue
         earliest = add_months(l["start"], 12)
         notice = add_days(earliest, -90)
